@@ -1,0 +1,2 @@
+require("basic")
+basic.print(string:"Hello from LeonBasic!")

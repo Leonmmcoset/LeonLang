@@ -1,0 +1,30 @@
+{
+    "name": "leonbasic",
+    "displayName": "LeonBasic Language Support",
+    "description": "Syntax highlighting and language support for LeonBasic programming language",
+    "version": "0.0.1",
+    "publisher": "LeonLangTeam",
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "leonbasic",
+                "extensions": [".leon"],
+                "aliases": ["LeonBasic", "leonbasic"],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "leonbasic",
+                "scopeName": "source.leonbasic",
+                "path": "./syntaxes/leonbasic.tmLanguage.json"
+            }
+        ]
+    }
+}

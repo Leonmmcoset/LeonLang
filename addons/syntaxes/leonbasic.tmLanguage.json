@@ -1,0 +1,78 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "LeonBasic",
+    "scopeName": "source.leonbasic",
+    "fileTypes": ["Leon"],
+    "patterns": [
+        {
+            "name": "comment.line.double-slash.leonbasic",
+            "match": "//.*$",
+            "captures": {
+                "0": {
+                    "name": "punctuation.definition.comment.leonbasic"
+                }
+            }
+        },
+        {
+            "name": "string.quoted.double.leonbasic",
+            "begin": "\"",
+            "end": "\"",
+            "captures": {
+                "0": {
+                    "name": "punctuation.definition.string.begin.leonbasic"
+                }
+            },
+            "patterns": [
+                {
+                    "name": "constant.character.escape.leonbasic",
+                    "match": "\\."
+                }
+            ]
+        },
+        {
+            "name": "keyword.control.leonbasic",
+            "match": "\\b(if|else|else\\s+if|for|while|do|try|catch|func|var|require|return|break|continue)\\b"
+        },
+        {
+            "name": "entity.name.function.leonbasic",
+            "match": "\\bfunc\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\("
+        },
+        {
+            "name": "variable.other.leonbasic",
+            "match": "\\bvar\\s*\\(([a-zA-Z_][a-zA-Z0-9_]*)\\)"
+        },
+        {
+            "name": "storage.type.leonbasic",
+            "match": "\\b(string|int|float|bool)\\b"
+        },
+        {
+            "name": "support.function.basic.leonbasic",
+            "match": "\\bbasic\\.(print|open|write|read|close|input|pause|runoscommand|setrequirepath)\\b"
+        },
+        {
+            "name": "support.function.request.leonbasic",
+            "match": "\\brequest\\.(get|download|check|header|footer)\\b"
+        },
+        {
+            "name": "constant.numeric.integer.leonbasic",
+            "match": "\\b\\d+\\b"
+        },
+        {
+            "name": "constant.numeric.float.leonbasic",
+            "match": "\\b\\d+\\.\\d+\\b"
+        },
+        {
+            "name": "punctuation.brackets.leonbasic",
+            "match": "[\\[\\]\\(\\){}]",
+            "captures": {
+                "0": {
+                    "name": "punctuation.definition.bracket.leonbasic"
+                }
+            }
+        },
+        {
+            "name": "keyword.operator.leonbasic",
+            "match": "(=|\\+|\\-|\\*|\\/|\\>|\\<|\\>=|\\<=|==|!=|&&|\\|\\|)"
+        }
+    ]
+}

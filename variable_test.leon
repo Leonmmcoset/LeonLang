@@ -1,0 +1,14 @@
+require("basic")
+// 测试变量赋值和打印
+var(a) = string:"Hello";
+var(b) = string:" World!";
+basic.print(var(a))
+basic.print(var(b))
+
+// 测试整数赋值
+var(num) = int:42;
+basic.print(var(num))
+
+// 测试浮点数赋值
+var(pi) = float:3.14;
+basic.print(var(pi))

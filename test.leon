@@ -1,0 +1,20 @@
+require("basic");
+
+// 打印 Hello world
+basic.print(string:"Hello world!");
+
+// 测试变量
+var(a) = string:"Hello, ";
+var(b) = string:"LeonBasic!";
+var(c) = var(a) + var(b);
+basic.print(var(c));
+
+// 测试整数和字符串拼接
+var(num) = int:42;
+var(result) = string:"The answer is: " + string:var(num);
+basic.print(var(result));
+
+// 测试用户输入（可选）
+// basic.print(string:"请输入你的名字: ");
+// var(name) = basic.input(string:"");
+// basic.print(string:"Hello, " + var(name) + string:"!");

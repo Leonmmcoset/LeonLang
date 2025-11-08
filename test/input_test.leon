@@ -1,0 +1,4 @@
+require("basic");
+// 直接使用basic.input的提示功能
+var(input) = basic.input("请输入一些内容: ");
+basic.print("你输入的是: " + var(input));

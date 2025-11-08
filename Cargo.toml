@@ -1,0 +1,10 @@
+[package]
+name = "leonlang"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+nom = "7.1"
+reqwest = { version = "0.11", features = ["blocking"] }
+tokio = { version = "1.32", features = ["full"] }

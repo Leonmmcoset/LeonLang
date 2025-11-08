@@ -1,0 +1,79 @@
+site_name: LeonBasic 编程语言文档
+site_description: LeonBasic 是一个简单易用的解释型编程语言
+site_author: LeonLang Team
+
+# 主题设置
+theme:
+  name: 'material'
+  language: 'zh'
+  features:
+    - content.code.annotate
+    - content.code.copy
+    - navigation.tabs
+    - navigation.sections
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换到暗色模式
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: 切换到亮色模式
+
+# 导航结构
+nav:
+  - 首页: index.md
+  - 快速入门: getting-started.md
+  - 基本语法: basic-syntax.md
+  - 控制流: control-flow.md
+  - 文件操作: file-operations.md
+  - 网络功能: network.md
+  - 错误处理: error-handling.md
+  - 用户交互: user-interaction.md
+
+# 插件配置
+plugins:
+  - search:
+      lang: zh
+
+# Markdown 扩展
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - meta
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - toc:
+      permalink: true
+
+# 额外配置
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com
+  version: "1.0.0"
