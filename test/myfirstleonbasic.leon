@@ -1,5 +1,5 @@
 require("basic");
-var(a) = int:5;
+var(a) = int:1;
 if(a > int:3) {
     basic.print(string:"a 大于 3");
 } else {

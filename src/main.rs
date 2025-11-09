@@ -25,17 +25,18 @@ struct Env {
     variables: HashMap<String, Value>,
     loaded_packages: HashMap<String, bool>,
     functions: HashMap<String, Function>,
+    debug_mode: bool,
 }
 
 impl Env {
-    fn new() -> Self {
+    fn new(debug_mode: bool) -> Self {
         let mut env = Self {
             variables: HashMap::new(),
             loaded_packages: HashMap::new(),
             functions: HashMap::new(),
+            debug_mode,
         };
         
-        // 注册基本函数
         register_basic_functions(&mut env);
         
         env
@@ -52,8 +53,9 @@ impl Env {
                 continue;
             }
             
-            // 特殊处理if语句（可能包含多行代码块）
+            // 所有处理都通过execute_line完成，包括if语句
             if trimmed.starts_with("if(") {
+                // 特殊处理多行if语句
                 let (result, new_index) = self.execute_if_statement(&lines[i..])?;
                 if let Err(e) = result {
                     return Err(format!("执行错误: {}", e));
@@ -75,6 +77,14 @@ impl Env {
         let trimmed_line = line.trim();
         if trimmed_line.is_empty() || trimmed_line.starts_with("//") {
             return Ok(());
+        }
+        
+        // 特殊处理if语句（在单个execute_line调用中处理）
+        if trimmed_line.starts_with("if(") {
+            // 将单行转换为数组以便调用execute_if_statement
+            let lines = [trimmed_line];
+            let (result, _) = self.execute_if_statement(&lines)?;
+            return result;
         }
         
         // 检查是否需要分号
@@ -116,6 +126,9 @@ impl Env {
     // 执行if语句（包含多行代码块）
     fn execute_if_statement(&mut self, lines: &[&str]) -> Result<(Result<(), String>, usize), String> {
         let first_line = lines[0].trim();
+        if self.debug_mode {
+            println!("DEBUG: 执行if语句: {}", first_line);
+        }
         
         // 提取条件部分
         let cond_start = first_line.find('(').ok_or("if语句格式错误")? + 1;
@@ -124,229 +137,159 @@ impl Env {
         
         // 评估条件
         let condition_result = self.evaluate_condition(condition_str)?;
+        if self.debug_mode {
+            println!("DEBUG: 条件结果: {}", condition_result);
+        }
         
-        let mut line_index = 1;
-        
-        // 处理if代码块
+        // 重新实现一个更干净、更简单的版本
+        let mut if_body = Vec::new();
+        let mut else_body = Vec::new();
+        let mut in_if = true;
+        let mut in_else = false;
         let mut brace_count = 0;
-        let mut in_if_block = false;
+        let mut total_lines_to_skip = 0;
+        let mut found_else = false;
         
-        // 查找并处理if代码块
-        while line_index < lines.len() {
-            let line = lines[line_index];
+        // 处理第一行的大括号
+        if first_line.contains('{') {
+            brace_count += 1;
+        }
+        
+        // 从if语句的下一行开始处理
+        let mut i = 1;
+        
+        while i < lines.len() {
+            let line = lines[i];
             let trimmed = line.trim();
             
-            // 检查是否是else语句
-            if trimmed == "else" {
-                // 确保已经处理完if代码块
-                if !in_if_block || brace_count > 0 {
-                    // 如果还在if代码块内部就遇到了else，这是语法错误
-                    return Err("if语句格式错误: 遇到未闭合的if代码块".to_string());
-                }
-                break;
-            }
-            
-            // 如果还没找到代码块开始，继续查找
-            if !in_if_block {
-                // 检查行中是否包含大括号
-                for (i, c) in line.chars().enumerate() {
-                    if c == '{' {
-                        brace_count += 1;
-                        in_if_block = true;
-                        // 如果大括号后还有内容，需要处理
-                        let after_brace = &line[i+1..].trim();
-                        if !after_brace.is_empty() && !after_brace.starts_with("//") && condition_result {
-                            // 为代码块内的语句添加分号（如果需要）
-                            let line_to_execute = if !after_brace.contains("{") && !after_brace.contains("}") && 
-                                                !after_brace.ends_with(';') && 
-                                                (after_brace.contains('.') && after_brace.contains('(') || 
-                                                 after_brace.starts_with("var(") && after_brace.contains(" = ")) {
-                                after_brace.to_string() + ";"
-                            } else {
-                                after_brace.to_string()
-                            };
-                            
-                            if let Err(e) = self.execute_line(&line_to_execute) {
-                                return Ok((Err(e), line_index + 1));
-                            }
-                        }
-                        break;
-                    }
-                }
-                line_index += 1;
+            // 检查是否是压缩格式的 else 行
+            if (trimmed.starts_with("}") && trimmed.ends_with("{")) && 
+               (trimmed.contains(" else ") || trimmed.contains("\nelse")) {
+                // 这是if块的结束和else块的开始
+                in_if = false;
+                in_else = true;
+                found_else = true;
+                brace_count = 1; // 重置为else块的左大括号
+                i += 1;
                 continue;
             }
             
-            // 处理代码块内容
-            if in_if_block {
-                // 统计大括号
-                for c in line.chars() {
-                    if c == '{' {
-                        brace_count += 1;
-                    } else if c == '}' {
-                        brace_count -= 1;
-                        // 代码块结束
-                        if brace_count == 0 {
-                            in_if_block = false;
-                            line_index += 1;
-                            break;
-                        }
-                    }
-                }
-                
-                // 如果代码块还没结束，处理当前行内容
-                if in_if_block && condition_result {
-                    if !trimmed.is_empty() && !trimmed.starts_with("//") {
-                        // 为代码块内的语句添加分号（如果需要）
-                        let line_to_execute = if !trimmed.contains("{") && !trimmed.contains("}") && 
-                                            !trimmed.ends_with(';') && 
-                                            (trimmed.contains('.') && trimmed.contains('(') || 
-                                             trimmed.starts_with("var(") && trimmed.contains(" = ")) {
-                            trimmed.to_string() + ";"
-                        } else {
-                            trimmed.to_string()
-                        };
-                        
-                        if let Err(e) = self.execute_line(&line_to_execute) {
-                            return Ok((Err(e), line_index + 1));
-                        }
-                    }
-                }
-                line_index += 1;
+            // 检查是否是普通 else 行
+            if (trimmed == "else {" || trimmed == "else") && brace_count == 1 {
+                // 这是if块的结束和else块的开始
+                in_if = false;
+                in_else = true;
+                found_else = true;
+                // 重置大括号计数
+                brace_count = if trimmed.contains('{') {
+                    1
+                } else {
+                    0
+                };
+                i += 1;
+                continue;
             }
+            
+            // 计算大括号
+            for c in trimmed.chars() {
+                if c == '{' {
+                    brace_count += 1;
+                } else if c == '}' {
+                    brace_count -= 1;
+                }
+            }
+            
+            // 收集有效的代码行
+            if in_if && !trimmed.is_empty() && trimmed != "{" && trimmed != "}" && !trimmed.starts_with("//") {
+                if_body.push(trimmed);
+            } else if in_else && !trimmed.is_empty() && trimmed != "{" && trimmed != "}" && !trimmed.starts_with("//") {
+                else_body.push(trimmed);
+            }
+            
+            // 检查是否到达整个结构的结束
+            if brace_count == 0 && (in_if || in_else) {
+                total_lines_to_skip = i + 1;
+                break;
+            }
+            
+            i += 1;
         }
         
-        // 如果条件为true，直接返回，不执行else部分
+        // 确保至少跳过一行
+        if total_lines_to_skip == 0 {
+            total_lines_to_skip = i;
+        }
+        
+        if self.debug_mode {
+            println!("DEBUG: if-else结构跳过行数: {}, if块行数: {}, else块行数: {}, 是否找到else: {}", 
+                    total_lines_to_skip, if_body.len(), else_body.len(), found_else);
+        }
+        
+        // 执行对应的代码块
         if condition_result {
-            return Ok((Ok(()), line_index));
-        }
-        
-        // 处理else部分（只有当条件为false时才执行）
-        if line_index < lines.len() {
-            let trimmed = lines[line_index].trim();
-            if trimmed == "else" {
-                line_index += 1;
-                
-                // 查找并处理else代码块
-                brace_count = 0;
-                let mut in_else_block = false;
-                
-                while line_index < lines.len() {
-                    let line = lines[line_index];
-                    let trimmed_else = line.trim();
-                    
-                    // 如果还没找到代码块开始，继续查找
-                    if !in_else_block {
-                        // 检查行中是否包含大括号
-                        for (i, c) in line.chars().enumerate() {
-                            if c == '{' {
-                                brace_count += 1;
-                                in_else_block = true;
-                                // 如果大括号后还有内容，需要处理
-                                let after_brace = &line[i+1..].trim();
-                                if !after_brace.is_empty() && !after_brace.starts_with("//") {
-                                    // 为代码块内的语句添加分号（如果需要）
-                                    let line_to_execute = if !after_brace.contains("{") && !after_brace.contains("}") && 
-                                                        !after_brace.ends_with(';') && 
-                                                        (after_brace.contains('.') && after_brace.contains('(') || 
-                                                         after_brace.starts_with("var(") && after_brace.contains(" = ")) {
-                                        after_brace.to_string() + ";"
-                                    } else {
-                                        after_brace.to_string()
-                                    };
-                                    
-                                    if let Err(e) = self.execute_line(&line_to_execute) {
-                                        return Ok((Err(e), line_index + 1));
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                        line_index += 1;
-                        continue;
-                    }
-                    
-                    // 处理代码块内容
-                    if in_else_block {
-                        // 统计大括号
-                        for c in line.chars() {
-                            if c == '{' {
-                                brace_count += 1;
-                            } else if c == '}' {
-                                brace_count -= 1;
-                                // 代码块结束
-                                if brace_count == 0 {
-                                    in_else_block = false;
-                                    line_index += 1;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // 如果代码块还没结束，处理当前行内容
-                        if in_else_block {
-                            if !trimmed_else.is_empty() && !trimmed_else.starts_with("//") {
-                                // 为代码块内的语句添加分号（如果需要）
-                                let line_to_execute = if !trimmed_else.contains("{") && !trimmed_else.contains("}") && 
-                                                    !trimmed_else.ends_with(';') && 
-                                                    (trimmed_else.contains('.') && trimmed_else.contains('(') || 
-                                                     trimmed_else.starts_with("var(") && trimmed_else.contains(" = ")) {
-                                    trimmed_else.to_string() + ";"
-                                } else {
-                                    trimmed_else.to_string()
-                                };
-                                
-                                if let Err(e) = self.execute_line(&line_to_execute) {
-                                    return Ok((Err(e), line_index + 1));
-                                }
-                            }
-                        }
-                        line_index += 1;
-                    }
+            if self.debug_mode {
+                println!("DEBUG: 条件为true，执行if块代码");
+            }
+            for code_line in &if_body {
+                if self.debug_mode {
+                    println!("DEBUG: 执行if代码行: {}", code_line);
                 }
+                self.execute_line(code_line)?;
+            }
+        } else if found_else {
+            if self.debug_mode {
+                println!("DEBUG: 条件为false，执行else块代码");
+            }
+            for code_line in &else_body {
+                if self.debug_mode {
+                    println!("DEBUG: 执行else代码行: {}", code_line);
+                }
+                self.execute_line(code_line)?;
             }
         }
         
-        Ok((Ok(()), line_index))
+        return Ok((Ok(()), total_lines_to_skip));
     }
     
     // 评估条件表达式
     fn evaluate_condition(&mut self, condition: &str) -> Result<bool, String> {
-        // 简化版本，仅支持数字比较
         let condition = condition.trim();
-        println!("DEBUG: 正在评估条件: {}", condition);
+        if self.debug_mode {
+            println!("DEBUG: 正在评估条件: {}", condition);
+        }
         
         // 检查 > 比较
         if let Some(pos) = condition.find('>') {
             let left = &condition[..pos].trim();
             let right = &condition[pos+1..].trim();
-            println!("DEBUG: 左侧: {}, 右侧: {}", left, right);
             
-            // 解析两边的值，尝试获取变量的值
+            // 获取左右两边的值
             let left_val = self.get_value_or_constant(left)?;
             let right_val = self.get_value_or_constant(right)?;
             
-            println!("DEBUG: 左侧值类型: {:?}, 右侧值类型: {:?}", 
-                     match &left_val {
-                         Value::String(_) => "String",
-                         Value::Int(_) => "Int",
-                         Value::Float(_) => "Float",
-                         _ => "Other",
-                     },
-                     match &right_val {
-                         Value::String(_) => "String",
-                         Value::Int(_) => "Int",
-                         Value::Float(_) => "Float",
-                         _ => "Other",
-                     });
-            
-            // 打印具体值
-            match (&left_val, &right_val) {
-                (Value::Int(l), Value::Int(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
-                (Value::Int(l), Value::Float(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
-                (Value::Float(l), Value::Int(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
-                (Value::Float(l), Value::Float(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
-                _ => (),
+            if self.debug_mode {
+                println!("DEBUG: 左侧值类型: {:?}, 右侧值类型: {:?}", 
+                         match &left_val {
+                             Value::String(_) => "String",
+                             Value::Int(_) => "Int",
+                             Value::Float(_) => "Float",
+                             _ => "Other",
+                         },
+                         match &right_val {
+                             Value::String(_) => "String",
+                             Value::Int(_) => "Int",
+                             Value::Float(_) => "Float",
+                             _ => "Other",
+                         });
+                
+                // 打印具体值
+                match (&left_val, &right_val) {
+                    (Value::Int(l), Value::Int(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
+                    (Value::Int(l), Value::Float(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
+                    (Value::Float(l), Value::Int(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
+                    (Value::Float(l), Value::Float(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
+                    _ => (),
+                }
             }
             
             // 比较
@@ -357,19 +300,19 @@ impl Env {
                 (Value::Float(left_num), Value::Float(right_num)) => left_num > right_num,
                 _ => return Err("比较操作只能用于数字类型".to_string()),
             };
-            println!("DEBUG: 比较结果: {}", result);
+            if self.debug_mode {
+                println!("DEBUG: 比较结果: {}", result);
+            }
             Ok(result)
-        } 
+        }
         // 检查 < 比较
         else if let Some(pos) = condition.find('<') {
             let left = &condition[..pos].trim();
             let right = &condition[pos+1..].trim();
             
-            // 解析两边的值，尝试获取变量的值
             let left_val = self.get_value_or_constant(left)?;
             let right_val = self.get_value_or_constant(right)?;
             
-            // 比较
             match (left_val, right_val) {
                 (Value::Int(left_num), Value::Int(right_num)) => Ok(left_num < right_num),
                 (Value::Int(left_num), Value::Float(right_num)) => Ok((left_num as f64) < right_num),
@@ -383,19 +326,16 @@ impl Env {
             let left = &condition[..pos].trim();
             let right = &condition[pos+2..].trim();
             
-            // 解析两边的值，尝试获取变量的值
             let left_val = self.get_value_or_constant(left)?;
             let right_val = self.get_value_or_constant(right)?;
             
-            // 比较
             match (left_val, right_val) {
                 (Value::String(s1), Value::String(s2)) => Ok(s1 == s2),
                 (Value::Int(i1), Value::Int(i2)) => Ok(i1 == i2),
                 (Value::Float(f1), Value::Float(f2)) => Ok(f1 == f2),
                 (Value::Int(i), Value::Float(f)) => Ok((i as f64) == f),
                 (Value::Float(f), Value::Int(i)) => Ok(f == (i as f64)),
-                (Value::Null, Value::Null) => Ok(true),
-                _ => Ok(false), // 不同类型的值不相等
+                _ => Ok(false),
             }
         }
         // 检查 != 比较
@@ -403,19 +343,16 @@ impl Env {
             let left = &condition[..pos].trim();
             let right = &condition[pos+2..].trim();
             
-            // 解析两边的值，尝试获取变量的值
             let left_val = self.get_value_or_constant(left)?;
             let right_val = self.get_value_or_constant(right)?;
             
-            // 比较
             match (left_val, right_val) {
                 (Value::String(s1), Value::String(s2)) => Ok(s1 != s2),
                 (Value::Int(i1), Value::Int(i2)) => Ok(i1 != i2),
                 (Value::Float(f1), Value::Float(f2)) => Ok(f1 != f2),
                 (Value::Int(i), Value::Float(f)) => Ok((i as f64) != f),
                 (Value::Float(f), Value::Int(i)) => Ok(f != (i as f64)),
-                (Value::Null, Value::Null) => Ok(false),
-                _ => Ok(true), // 不同类型的值不相等
+                _ => Ok(true),
             }
         }
         else {
@@ -429,7 +366,6 @@ impl Env {
         if value_str.starts_with("var(") && value_str.ends_with(")") {
             let var_name = &value_str[4..value_str.len()-1];
             if let Some(val) = self.variables.get(var_name) {
-                // 根据值的类型创建新的值
                 return Ok(match val {
                     Value::String(s) => Value::String(s.clone()),
                     Value::Int(i) => Value::Int(*i),
@@ -445,7 +381,6 @@ impl Env {
         // 如果是直接引用变量名（如 "a"）
         if !value_str.contains(":") && !value_str.contains(".") && !value_str.contains("(") {
             if let Some(val) = self.variables.get(value_str) {
-                // 根据值的类型创建新的值
                 return Ok(match val {
                     Value::String(s) => Value::String(s.clone()),
                     Value::Int(i) => Value::Int(*i),
@@ -456,67 +391,34 @@ impl Env {
             }
         }
         
-        // 否则尝试解析为常量值
-        self.parse_value_without_expression(value_str)
-    }
-    
-    // 解析值或常量数字
-    fn parse_value_or_constant(&self, value_str: &str) -> Result<Value, String> {
-        // 检查是否是变量引用（var(a)格式）
-        if value_str.starts_with("var(") {
-            let var_name = value_str.trim_start_matches("var(").trim_end_matches(")");
-            if let Some(val) = self.variables.get(var_name) {
-                // 手动复制值，避免使用clone
-                return match val {
-                    Value::String(s) => Ok(Value::String(s.clone())),
-                    Value::Int(i) => Ok(Value::Int(*i)),
-                    Value::Float(f) => Ok(Value::Float(*f)),
-                    // 对于File类型，由于没有实现Clone，这里简化处理
-                    Value::File(_) => Err("无法比较文件类型".to_string()),
-                    Value::Null => Ok(Value::Null),
-                };
-            }
-        }
-        
-        // 检查是否是简单变量名（如a、b等）
-        if !value_str.contains(":") && !value_str.contains(".") && !value_str.contains("(") && !value_str.contains(")") && !value_str.contains("\"") {
-            if let Some(val) = self.variables.get(value_str) {
-                // 手动复制值，避免使用clone
-                match val {
-                    Value::String(s) => return Ok(Value::String(s.clone())),
-                    Value::Int(i) => return Ok(Value::Int(*i)),
-                    Value::Float(f) => return Ok(Value::Float(*f)),
-                    // 对于File类型，由于没有实现Clone，这里简化处理
-                    Value::File(_) => return Err("无法比较文件类型".to_string()),
-                    Value::Null => return Ok(Value::Null),
-                };
-            }
-        }
-        
         // 尝试解析为整数常量
         if let Ok(num) = value_str.parse::<i64>() {
             return Ok(Value::Int(num));
         }
         
-        // 尝试解析为普通值
-        self.parse_value(value_str)
-    }
-    
-    // 比较两个值
-    fn compare_values(&self, left: &Value, right: &Value, operator: &str) -> Result<bool, String> {
-        // 简化实现 - 目前只处理整数比较
-        if let (Value::Int(left_int), Value::Int(right_int)) = (left, right) {
-            match operator {
-                ">" => Ok(left_int > right_int),
-                "<" => Ok(left_int < right_int),
-                ">=" => Ok(left_int >= right_int),
-                "<=" => Ok(left_int <= right_int),
-                "==" => Ok(left_int == right_int),
-                _ => Err("不支持的比较操作符".to_string()),
-            }
-        } else {
-            Err("目前只支持整数比较".to_string())
+        // 尝试解析为浮点数常量
+        if let Ok(num) = value_str.parse::<f64>() {
+            return Ok(Value::Float(num));
         }
+        
+        // 否则尝试解析为其他值
+        if value_str.starts_with("int:") {
+            let num_str = value_str.trim_start_matches("int:");
+            if let Ok(num) = num_str.parse::<i64>() {
+                return Ok(Value::Int(num));
+            }
+        } else if value_str.starts_with("float:") {
+            let num_str = value_str.trim_start_matches("float:");
+            if let Ok(num) = num_str.parse::<f64>() {
+                return Ok(Value::Float(num));
+            }
+        } else if value_str.starts_with("string:") {
+            let content_part = value_str.trim_start_matches("string:");
+            let content = content_part.trim_matches('"');
+            return Ok(Value::String(content.to_string()));
+        }
+        
+        Err(format!("无法解析值: {}", value_str))
     }
     
     fn handle_require(&mut self, line: &str) -> Result<(), String> {
@@ -775,20 +677,40 @@ fn main() {
     }
     
     // 正常的文件执行模式
-    if args.len() < 2 {
-        println!("LeonBasic 解释器 v0.1.0");
-        println!("用法: leonlang <文件>");
-        println!("用法: leonlang --shell  # 启动交互式shell");
-        return;
+    let mut debug_mode = false;
+    let mut file_path = None;
+    
+    // 解析参数
+    for (i, arg) in args.iter().enumerate() {
+        if i == 0 {
+            // 跳过程序名称
+            continue;
+        }
+        if arg == "--debug" {
+            debug_mode = true;
+        } else if file_path.is_none() {
+            // 第一个非--debug参数是文件路径
+            file_path = Some(arg);
+        }
     }
     
-    let file_path = &args[1];
+    // 检查是否提供了文件路径
+    let file_path = match file_path {
+        Some(path) => path,
+        None => {
+            println!("LeonBasic 解释器 v0.1.0");
+            println!("用法: leonlang <文件> [--debug]");
+            println!("用法: leonlang --shell  # 启动交互式shell");
+            return;
+        }
+    };
+    
     if !Path::new(file_path).exists() {
         eprintln!("文件不存在: {}", file_path);
         return;
     }
     
-    let mut env = Env::new();
+    let mut env = Env::new(debug_mode);
     
     match File::open(file_path) {
         Ok(mut file) => {
@@ -808,9 +730,9 @@ fn start_shell() {
     println!("LeonBasic Shell v0.1.0");
     println!("输入 'exit' 退出shell");
     println!("输入 'help' 查看帮助信息");
-    println!("------------------------");
+    println!("---------------------");
     
-    let mut env = Env::new();
+    let mut env = Env::new(false); // shell模式默认不开启调试
     
     // 默认加载basic库
     if let Err(e) = env.handle_require("require(\"basic\")") {

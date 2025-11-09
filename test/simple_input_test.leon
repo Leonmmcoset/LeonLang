@@ -1,1 +1,5 @@
-./target/release/leonlang your_file.leon
+require("basic");
+func(test()) = {
+    basic.print(string:"Hello world!");
+};
+func(test());  // 调用函数，输出 Hello world!
