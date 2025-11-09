@@ -123,3 +123,11 @@ In function bodies, use `self(param_name)` to access parameter values:
 * check(): View status code
 * header(): View header information
 * footer(): View footer information
+
+### (3) time library
+
+* timestamp(): Get current timestamp (milliseconds)
+* formatTime(): Format timestamp to string
+* sleep(): Pause program for specified milliseconds
+* diffTime(): Calculate difference between two timestamps (milliseconds)
+* getDateTime(): Get current date and time string

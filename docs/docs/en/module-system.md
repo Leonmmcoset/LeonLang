@@ -12,6 +12,9 @@ require("basic");
 
 // Import network request library
 require("request");
+
+// Import time processing library
+require("time");
 ```
 
 ### (2) Importing Custom Modules

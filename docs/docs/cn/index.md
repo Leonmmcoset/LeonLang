@@ -80,6 +80,7 @@ graph LR
 
 * [快速入门](getting-started.md) - 安装和使用指南
 * [基本语法](basic-syntax.md) - 变量、函数、转义字符和内置库
+* [时间处理库](/cn/time-library/) - 时间相关操作函数
 * [模块系统](module-system.md) - require函数和模块导入
 * [控制流](control-flow.md) - 条件语句和循环
 * [文件操作](file-operations.md) - 读写文件

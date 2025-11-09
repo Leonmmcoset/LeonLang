@@ -12,6 +12,9 @@ require("basic");
 
 // 导入网络请求库
 require("request");
+
+// 导入时间处理库
+require("time");
 ```
 
 ### (2) 导入自定义模块

@@ -85,4 +85,5 @@ Use the left navigation bar to browse the complete documentation, including:
 * [File Operations](file-operations.md) - Reading and writing files
 * [Network](network.md) - HTTP requests and downloads
 * [Error Handling](error-handling.md) - Exception catching
+* [Time Library](time-library.md) - Time processing utilities
 * [User Interaction](user-interaction.md) - Menus and user input
