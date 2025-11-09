@@ -1,2 +1,7 @@
+// 简单测试文件
 require("basic");
-basic.print(string:"Hello World!");
+require("request");
+
+basic.print(string:"测试request.get:");
+var(response) = request.get(string:"https://example.com");
+basic.print(var(response));

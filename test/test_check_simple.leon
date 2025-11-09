@@ -1,0 +1,7 @@
+// 简化的request.check测试
+require("basic");
+require("request");
+
+basic.print(string:"测试:");
+var(status) = request.check(string:"https://example.com");
+basic.print(var(status));

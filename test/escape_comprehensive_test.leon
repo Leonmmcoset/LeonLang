@@ -1,0 +1,28 @@
+require("basic");
+
+// 测试直接字符串字面量中的转义字符
+basic.print(string:"测试\n换行符");
+basic.print(string:"测试\t制表符");
+basic.print(string:"测试\"引号\"");
+basic.print(string:"测试\\反斜杠");
+
+// 测试变量赋值中的转义字符
+var(a) = string:"变量中的\n换行符";
+basic.print(var(a));
+
+// 测试字符串拼接中的转义字符
+var(b) = string:"拼接\n" + string:"测试";
+basic.print(var(b));
+
+// 测试string:var()形式的转义字符处理
+var(c) = string:"原始\n内容";
+var(d) = string:var(c);
+basic.print(var(d));
+
+// 测试更复杂的表达式
+var(e) = string:"开始\n" + string:var(a) + string:"\n结束";
+basic.print(var(e));
+
+// 测试特殊情况
+basic.print(string:"单个反斜杠后面没有字符\\");
+basic.print(string:"未知转义序列\x");

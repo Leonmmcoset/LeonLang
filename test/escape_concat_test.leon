@@ -1,0 +1,18 @@
+// 测试字符串拼接时的转义字符处理
+require("basic");
+
+// 变量中的转义字符
+var(newline) = string:"\n";
+var(tab) = string:"\t";
+var(quote) = string:"\"";
+
+// 测试拼接转义字符变量
+basic.print(string:"拼接换行符：" + var(newline) + string:"第二行");
+basic.print(string:"拼接制表符：" + var(tab) + string:"制表后的内容");
+basic.print(string:"拼接双引号：" + var(quote) + string:"内容" + var(quote));
+
+// 测试直接拼接带转义字符的字符串
+basic.print(string:"直接拼接\n换行" + string:"\t制表" + string:"\"引号\"");
+
+// 测试复杂混合拼接
+basic.print(string:"\n复杂测试：" + string:"行1\n" + string:"行2\t" + string:"列1\t列2\n" + var(quote) + string:"完成" + var(quote));

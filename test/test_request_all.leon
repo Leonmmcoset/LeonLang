@@ -1,0 +1,23 @@
+// 详细测试request模块的所有函数
+require("basic");
+require("request");
+
+basic.print(string:"测试request.get函数:");
+var(response1) = request.get(string:"https://example.com");
+basic.print(var(response1));
+
+basic.print(string:"\n测试request.check函数:");
+var(status) = request.check(string:"https://example.com");
+basic.print(string:"状态码: " + var(status));
+
+basic.print(string:"\n测试request.download函数:");
+var(response2) = request.download(string:"https://example.com/image.jpg", string:"test_image.jpg");
+basic.print(var(response2));
+
+basic.print(string:"\n测试request.header函数:");
+var(response3) = request.header(string:"https://example.com");
+basic.print(var(response3));
+
+basic.print(string:"\n测试request.footer函数:");
+var(response4) = request.footer(string:"https://example.com");
+basic.print(var(response4));

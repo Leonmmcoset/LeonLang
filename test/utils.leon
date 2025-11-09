@@ -1,0 +1,14 @@
+require("basic");
+
+// 定义一些工具函数
+func(utils.add(a, b)) = {
+    return int:a + int:b;
+};
+
+func(utils.greet(name)) = {
+    return string:"Hello, " + var(name) + string:"!";
+};
+
+func(utils.multiply(a, b)) = {
+    return int:a * int:b;
+};

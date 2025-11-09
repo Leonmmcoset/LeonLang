@@ -1,0 +1,20 @@
+require("basic");
+
+// 测试用户提到的具体用例（类似test_request_module.leon第12行）
+var(status) = int:200;
+basic.print(string:"状态码: " + var(status));
+
+// 测试包含换行符的字符串
+var(multi_line) = string:"第一行\n第二行\n第三行";
+basic.print(var(multi_line));
+
+// 测试复杂的混合转义
+var(complex) = string:"测试\t制表符\n换行符\"引号\\反斜杠";
+basic.print(var(complex));
+
+// 测试多个字符串拼接
+var(part1) = string:"Hello ";
+var(part2) = string:"World!\n";
+var(part3) = string:"Welcome\tto\tLeonBasic";
+var(full) = var(part1) + var(part2) + var(part3);
+basic.print(full);

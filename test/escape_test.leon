@@ -1,0 +1,13 @@
+// 测试字符串转义字符功能
+require("basic");
+
+basic.print(string:"测试换行符\n第二行");
+basic.print(string:"测试制表符\t分隔内容");
+basic.print(string:"测试双引号：\"Hello\"\n继续测试");
+basic.print(string:"测试反斜杠：C:\\Windows\\System32");
+
+basic.print(string:"\n多行测试：");
+basic.print(string:"第一行\n第二行\n第三行");
+
+basic.print(string:"\n混合转义：");
+basic.print(string:"制表符：\t双引号：\"换行符：\n反斜杠：\\");
