@@ -1,5 +1,3 @@
 require("basic");
-func(test()) = {
-    basic.print(string:"Hello world!");
-};
-func(test());  // 调用函数，输出 Hello world!
+var(input) = basic.input(string:"");
+basic.print(string:"请输入一个数字:" + var(input));

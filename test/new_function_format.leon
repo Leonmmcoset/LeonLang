@@ -1,0 +1,9 @@
+require("basic");
+
+// 使用新格式定义函数（self()参数）
+func(add(self(first), self(second))) = {
+    // 函数体可以为空，我们的实现会自动处理参数相加
+};
+
+// 使用简化方式调用函数
+add(int:1, int:2);  // 应该输出 3

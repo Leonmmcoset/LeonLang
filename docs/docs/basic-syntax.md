@@ -47,17 +47,24 @@ require("basic");
 func(test()) = {
     basic.print("Hello world!");
 };
-func(test());  // 调用函数，输出 Hello world!
+test();  // 调用函数，输出 Hello world!
 ```
 
 ### (2) 有参数函数
 ```leon
 require("basic");
-func(add(first, second)) = {
-    basic.print(int:first + int:second);
+func(add(self(first), self(second))) = {
+    basic.print(int:self(first) + int:self(second));
 };
-func(add(int:1, int:2));  // 调用函数，输出 3
+add(int:1, int:2);  // 调用函数，输出 3
 ```
+
+### (3) 参数访问语法
+
+在函数体中，使用 `self(param_name)` 来访问参数值：
+* `int:self(first)` - 获取参数 first 的整数值
+* `string:self(second)` - 获取参数 second 的字符串值
+* `float:self(param)` - 获取参数 param 的浮点数值
 
 ## 4. 内置库
 

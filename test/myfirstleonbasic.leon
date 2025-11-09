@@ -1,7 +1,5 @@
 require("basic");
-var(a) = int:1;
-if(a > int:3) {
-    basic.print(string:"a 大于 3");
-} else {
-    basic.print(string:"a 不大于 3");
-}
+func(add(self(first), self(second))) = {
+    basic.print(int:self(first) + int:self(second));
+};
+add(int:1, int:2);

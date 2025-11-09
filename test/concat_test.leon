@@ -1,23 +1,23 @@
-require("basic")
+require("basic");
 // 测试字符串拼接功能
 
 // 字符串与字符串拼接
 var(a) = string:"Hello";
 var(b) = string:" World!";
 var(c) = var(a) + var(b);
-basic.print(var(c))
+basic.print(var(c));
 
 // 字符串与整数拼接
 var(d) = string:"Number: ";
 var(e) = int:42;
 var(f) = var(d) + var(e);
-basic.print(var(f))
+basic.print(var(f));
 
 // 字符串与浮点数拼接
 var(g) = string:"Pi is approximately: ";
 var(h) = float:3.14159;
 var(i) = var(g) + var(h);
-basic.print(var(i))
+basic.print(var(i));
 
 // 字符串常量与变量拼接
-basic.print(string:"直接拼接: " + var(a))
+basic.print(string:"直接拼接: " + var(a));

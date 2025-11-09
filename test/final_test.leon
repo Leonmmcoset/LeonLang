@@ -1,0 +1,5 @@
+require("basic"); 
+func(add(self(first), self(second))) = { 
+    basic.print(int:self(first) + int:self(second)); 
+}; 
+add(int:1, int:2);  // 调用函数，输出 3
