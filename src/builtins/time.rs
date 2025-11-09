@@ -3,7 +3,7 @@ use std::thread::sleep;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub fn register_time_functions(env: &mut Env) {
-    // 获取当前时间戳（毫秒）
+    // Get current timestamp (milliseconds)
     env.functions.insert("time.timestamp".to_string(), Box::new(|_| {
         let now = SystemTime::now();
         let duration = now.duration_since(UNIX_EPOCH).map_err(|e| e.to_string())?;
@@ -11,7 +11,7 @@ pub fn register_time_functions(env: &mut Env) {
         Ok(Value::Int(timestamp_ms))
     }));
     
-    // 获取当前格式化时间
+    // Get current formatted time
     env.functions.insert("time.getDateTime".to_string(), Box::new(|args| {
         let format = if let Some(Value::String(f)) = args.get(0) {
             f.clone()
@@ -28,7 +28,7 @@ pub fn register_time_functions(env: &mut Env) {
         Ok(Value::String(formatted))
     }));
     
-    // 格式化指定时间戳
+    // Format specified timestamp
     env.functions.insert("time.formatTime".to_string(), Box::new(|args| {
         if let (Some(Value::Int(timestamp)), Some(Value::String(format))) = 
             (args.get(0), args.get(1)) {
@@ -38,24 +38,24 @@ pub fn register_time_functions(env: &mut Env) {
             let formatted = format_time_with_pattern(timestamp_sec, format)?;
             Ok(Value::String(formatted))
         } else {
-            Err("formatTime函数需要两个参数：时间戳和格式字符串".to_string())
+            Err("formatTime function requires two parameters: timestamp and format string".to_string())
         }
     }));
     
-    // 暂停执行指定毫秒数
+    // Pause execution for specified milliseconds
     env.functions.insert("time.sleep".to_string(), Box::new(|args| {
         if let Some(Value::Int(ms)) = args.get(0) {
             if *ms < 0 {
-                return Err("睡眠时间不能为负数".to_string());
+                return Err("Sleep time cannot be negative".to_string());
             }
             sleep(Duration::from_millis(*ms as u64));
             Ok(Value::Null)
         } else {
-            Err("sleep函数需要一个整数参数（毫秒数）".to_string())
+            Err("sleep function requires an integer parameter (milliseconds)".to_string())
         }
     }));
     
-    // 计算两个时间戳的差值（毫秒）
+    // Calculate difference between two timestamps (milliseconds)
     env.functions.insert("time.diffTime".to_string(), Box::new(|args| {
         if let (Some(Value::Int(start)), Some(Value::Int(end))) = 
             (args.get(0), args.get(1)) {
@@ -63,25 +63,25 @@ pub fn register_time_functions(env: &mut Env) {
             let diff = *end - *start;
             Ok(Value::Int(diff))
         } else {
-            Err("diffTime函数需要两个整数参数（开始和结束时间戳）".to_string())
+            Err("diffTime function requires two integer parameters (start and end timestamps)".to_string())
         }
     }));
     
 
 }
 
-// 简化的时间格式化函数
-// 支持的格式：%Y(年份), %m(月份), %d(日期), %H(小时), %M(分钟), %S(秒)
+// Simplified time formatting function
+// Supported formats: %Y(year), %m(month), %d(day), %H(hour), %M(minute), %S(second)
 fn format_time_with_pattern(timestamp: u64, format: &str) -> Result<String, String> {
-    // 这里使用简化的时间转换逻辑
-    // 在实际项目中，建议使用chrono库来处理更复杂的时间格式化
+    // Using simplified time conversion logic here
+    // In a real project, it's recommended to use the chrono library for more complex time formatting
     let duration = Duration::from_secs(timestamp);
     let days = duration.as_secs() / (24 * 60 * 60);
     let hours = (duration.as_secs() % (24 * 60 * 60)) / (60 * 60);
     let minutes = (duration.as_secs() % (60 * 60)) / 60;
     let seconds = duration.as_secs() % 60;
     
-    // 简化的日期计算（从1970-01-01开始）
+    // Simplified date calculation (starting from 1970-01-01)
     let year = 1970 + (days / 365);
     let month = ((days % 365) / 30) + 1;
     let day = (days % 30) + 1;

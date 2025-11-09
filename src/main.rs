@@ -1192,7 +1192,7 @@ fn main() {
     // 检查版本号参数
     for arg in &args[1..] {
         if arg == "--version" || arg == "--ver" {
-            println!("LeonBasic 解释器 v{}", version::VERSION);
+            println!("LeonBasic Interpreter v{}", version::VERSION);
             return;
         }
     }
@@ -1225,16 +1225,16 @@ fn main() {
     let file_path = match file_path {
         Some(path) => path,
         None => {
-            println!("LeonBasic 解释器 v{}", version::VERSION);
-            println!("用法: leonlang <文件> [--debug]");
-            println!("用法: leonlang --shell  # 启动交互式shell");
-            println!("用法: leonlang --version 或 --ver  # 查看版本号");
+            println!("LeonBasic Interpreter v{}", version::VERSION);
+            println!("Usage: leonlang <file> [--debug]");
+            println!("Usage: leonlang --shell  # Start interactive shell");
+            println!("Usage: leonlang --version or --ver  # View version");
             return;
         }
     };
     
     if !Path::new(file_path).exists() {
-        eprintln!("文件不存在: {}", file_path);
+        eprintln!("File not found: {}", file_path);
         return;
     }
     
@@ -1249,12 +1249,12 @@ fn main() {
         Ok(mut file) => {
             let mut content = String::new();
             if let Err(e) = file.read_to_string(&mut content) {
-                eprintln!("读取文件失败: {}", e);
+                eprintln!("Failed to read file: {}", e);
             } else if let Err(e) = env.parse_and_execute(&content) {
                 eprintln!("{}", e);
             }
         },
-        Err(e) => eprintln!("打开文件失败: {}", e),
+        Err(e) => eprintln!("Failed to open file: {}", e)
     }
 }
 

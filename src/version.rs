@@ -1,2 +1,2 @@
-// 版本号定义
+// Version definition
 pub const VERSION: &str = "0.1.0";
