@@ -1,0 +1,30 @@
+require("basic");
+require("time");
+
+// 测试时间戳功能
+basic.print("测试时间戳:");
+var(ts) = time.timestamp();
+basic.print(var(ts));
+
+// 测试格式化时间
+basic.print("\n测试默认格式化时间:");
+var(default_time) = time.getDateTime();
+basic.print(var(default_time));
+
+// 测试自定义格式时间
+basic.print("\n测试自定义格式时间:");
+var(custom_time) = time.getDateTime(string:"%Y/%m/%d %H-%M-%S");
+basic.print(var(custom_time));
+
+// 测试时间差计算
+basic.print("\n测试时间差计算:");
+var(start) = time.timestamp();
+time.sleep(int:1000);
+var(end) = time.timestamp();
+var(diff) = time.diffTime(var(start), var(end));
+basic.print(string:"睡眠1000毫秒后，实际耗时: " + string:var(diff) + " 毫秒");
+
+// 测试formatTime函数
+basic.print("\n测试formatTime函数:");
+var(formatted) = time.formatTime(var(start), string:"%Y-%m-%d %H:%M:%S");
+basic.print(var(formatted));

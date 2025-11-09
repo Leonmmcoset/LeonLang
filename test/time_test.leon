@@ -7,8 +7,10 @@ basic.print("性能测试开始...");
 // 测试字符串拼接
 var(str_start) = time.timestamp();
 var(long_str) = string:"";
-for(var(i) = int:0; i < int:10000; i = i + int:1) {
+var(i) = int:0;
+while(var(i) < int:10000) {
     long_str = long_str + string:"a";
+    i = i + int:1;
 }
 var(str_end) = time.timestamp();
 var(str_time) = time.diffTime(var(str_start), var(str_end));
@@ -17,8 +19,10 @@ basic.print(string:"字符串拼接10000次耗时: " + string:var(str_time) + " 
 // 测试数学运算
 var(math_start) = time.timestamp();
 var(result) = int:0;
-for(var(i) = int:0; i < int:10000000; i = i + int:1) {
-    result = (result + i) % int:100;
+var(j) = int:0;
+while(var(j) < int:10000000) {
+    result = (result + j) % int:100;
+    j = j + int:1;
 }
 var(math_end) = time.timestamp();
 var(math_time) = time.diffTime(var(math_start), var(math_end));

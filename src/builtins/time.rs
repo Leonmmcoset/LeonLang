@@ -67,25 +67,7 @@ pub fn register_time_functions(env: &mut Env) {
         }
     }));
     
-    // 获取当前日期（YYYY-MM-DD格式）
-    env.functions.insert("time.today".to_string(), Box::new(|_| {
-        let now = SystemTime::now();
-        let duration = now.duration_since(UNIX_EPOCH).map_err(|e| e.to_string())?;
-        let timestamp_sec = duration.as_secs();
-        
-        let formatted = format_time_with_pattern(timestamp_sec, "%Y-%m-%d")?;
-        Ok(Value::String(formatted))
-    }));
-    
-    // 获取当前时间（HH:MM:SS格式）
-    env.functions.insert("time.currentTimeOnly".to_string(), Box::new(|_| {
-        let now = SystemTime::now();
-        let duration = now.duration_since(UNIX_EPOCH).map_err(|e| e.to_string())?;
-        let timestamp_sec = duration.as_secs();
-        
-        let formatted = format_time_with_pattern(timestamp_sec, "%H:%M:%S")?;
-        Ok(Value::String(formatted))
-    }));
+
 }
 
 // 简化的时间格式化函数
