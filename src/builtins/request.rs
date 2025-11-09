@@ -81,7 +81,7 @@ pub fn register_request_functions(env: &mut Env) {
                 .map_err(|e| e.to_string())?;
             
             // 这里简化处理，返回一些基本的响应信息作为"footer"
-            let footer = format!("Status: {}\nVersion: {}\nURL: {}", 
+            let footer = format!("Status: {}\nVersion: {:?}\nURL: {}", 
                 response.status(),
                 response.version(),
                 response.url());

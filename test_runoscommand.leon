@@ -1,0 +1,4 @@
+require("basic");
+basic.print(string:"测试runoscommand函数");
+var(result) = basic.runoscommand(string:"dir");
+basic.print(string:"命令输出: " + var(result));

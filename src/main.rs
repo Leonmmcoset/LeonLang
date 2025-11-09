@@ -3,6 +3,9 @@ use std::fs::File;
 use std::io::{Read, stdin, Write};
 use std::path::Path;
 
+// 导入内置库模块
+mod builtins;
+
 // 定义值的类型
 #[derive(Debug)]
 enum Value {
@@ -50,7 +53,7 @@ impl Env {
             debug_mode,
         };
         
-        register_basic_functions(&mut env);
+        // 函数注册现在在main函数中进行
         
         env
     }
@@ -1226,6 +1229,10 @@ fn main() {
     
     let mut env = Env::new(debug_mode);
     
+    // 注册内置函数
+    builtins::register_basic_functions(&mut env);
+    builtins::register_request_functions(&mut env);
+    
     match File::open(file_path) {
         Ok(mut file) => {
             let mut content = String::new();
@@ -1297,58 +1304,6 @@ fn start_shell() {
 }
 
 // 格式化值为字符串
-fn format_value(value: &Value) -> String {
-    match value {
-        Value::String(s) => s.clone(),
-        Value::Int(i) => i.to_string(),
-        Value::Float(f) => f.to_string(),
-        Value::Null => "null".to_string(),
-        Value::File(_) => "[file handle]".to_string(),
-    }
-}
+// 注意：format_value函数现在在builtins模块中定义
 
-// 注册基本函数
-fn register_basic_functions(env: &mut Env) {
-    // 基本输出函数
-    env.functions.insert("basic.print".to_string(), Box::new(|args| {
-        if args.is_empty() {
-            println!();
-            return Ok(Value::Null);
-        }
-        
-        let output = args.iter().map(|arg| format_value(arg)).collect::<Vec<String>>().join("");
-        println!("{}", output);
-        Ok(Value::Null)
-    }));
-    
-    // 用户输入
-        env.functions.insert("basic.input".to_string(), Box::new(|args| {
-            // 获取提示信息参数
-            let prompt = if let Some(Value::String(p)) = args.get(0) {
-                p.clone()
-            } else {
-                "请输入: ".to_string()
-            };
-            
-            // 打印提示信息并刷新缓冲区
-            print!("{}", prompt);
-            std::io::stdout().flush().unwrap_or(());
-            
-            // 读取用户输入
-            let mut input = String::new();
-            match std::io::stdin().read_line(&mut input) {
-                Ok(_n) => {
-                    // 保留原始输入内容（包括换行符），不进行trim处理
-                    Ok(Value::String(input))
-                },
-                Err(_) => Err("读取输入失败".to_string())
-            }
-        }));
-    
-    // 暂停函数
-    env.functions.insert("basic.pause".to_string(), Box::new(|_| {
-        println!("按任意键继续...");
-        let _ = std::io::stdin().read(&mut [0u8]).unwrap_or(0);
-        Ok(Value::Null)
-    }));
-}
+// 注意：register_basic_functions函数现在在builtins模块中定义

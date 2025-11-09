@@ -29,10 +29,13 @@ pub fn register_basic_functions(env: &mut Env) {
     // 执行系统命令
     env.functions.insert("basic.runoscommand".to_string(), Box::new(|args| {
         if let Some(Value::String(cmd)) = args.get(0) {
+            // 在Windows上，将整个命令作为一个字符串传递给cmd /c
             let output = Command::new("cmd")
-                .args(["/c", cmd])
+                .args(["/c", &cmd])
                 .output()
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| format!("执行命令失败: {}", e.to_string()))?;
+            
+            // 获取标准输出
             let result = String::from_utf8_lossy(&output.stdout).to_string();
             Ok(Value::String(result))
         } else {

@@ -1,18 +1,3 @@
 require("basic");
-require("utils");
-
-basic.print("测试加载外部模块...");
-
-// 测试utils模块的add函数
-var(sum) = utils.add(int:5, int:3);
-basic.print(string:"5 \+ 3 = " + string:var(sum));
-
-// 测试utils模块的greet函数
-var(greeting) = utils.greet(string:"World");
-basic.print(var(greeting));
-
-// 测试utils模块的multiply函数
-var(product) = utils.multiply(int:4, int:7);
-basic.print(string:"4 * 7 = " + string:var(product));
-
-basic.print("测试完成！");
+var(result) = basic.runoscommand(string:"dir");
+basic.print(string:"命令输出: " + var(result));
