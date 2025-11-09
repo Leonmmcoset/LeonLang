@@ -4,7 +4,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub fn register_time_functions(env: &mut Env) {
     // 获取当前时间戳（毫秒）
-    env.functions.insert("time.now".to_string(), Box::new(|_| {
+    env.functions.insert("time.timestamp".to_string(), Box::new(|_| {
         let now = SystemTime::now();
         let duration = now.duration_since(UNIX_EPOCH).map_err(|e| e.to_string())?;
         let timestamp_ms = duration.as_millis() as i64;
@@ -12,7 +12,7 @@ pub fn register_time_functions(env: &mut Env) {
     }));
     
     // 获取当前格式化时间
-    env.functions.insert("time.currentTime".to_string(), Box::new(|args| {
+    env.functions.insert("time.getDateTime".to_string(), Box::new(|args| {
         let format = if let Some(Value::String(f)) = args.get(0) {
             f.clone()
         } else {
