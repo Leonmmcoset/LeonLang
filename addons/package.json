@@ -2,7 +2,7 @@
     "name": "leonbasic",
     "displayName": "LeonBasic Language Support",
     "description": "Syntax highlighting, language support and code execution for LeonBasic programming language",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "publisher": "LeonBasicTeam",
     "engines": {
         "vscode": "^1.60.0"
@@ -32,12 +32,22 @@
                 "command": "leonbasic.runCode",
                 "title": "Run LeonBasic Code",
                 "category": "LeonBasic"
+            },
+            {
+                "command": "leonbasic.lintCode",
+                "title": "Lint LeonBasic Code",
+                "category": "LeonBasic"
             }
         ],
         "keybindings": [
             {
                 "command": "leonbasic.runCode",
                 "key": "F5",
+                "when": "editorLangId == leonbasic"
+            },
+            {
+                "command": "leonbasic.lintCode",
+                "key": "Ctrl+Shift+L",
                 "when": "editorLangId == leonbasic"
             }
         ],
@@ -47,6 +57,11 @@
                     "command": "leonbasic.runCode",
                     "when": "editorLangId == leonbasic",
                     "group": "navigation"
+                },
+                {
+                    "command": "leonbasic.lintCode",
+                    "when": "editorLangId == leonbasic",
+                    "group": "navigation"
                 }
             ],
             "editor/title": [
@@ -54,12 +69,31 @@
                     "command": "leonbasic.runCode",
                     "when": "editorLangId == leonbasic",
                     "group": "navigation"
+                },
+                {
+                    "command": "leonbasic.lintCode",
+                    "when": "editorLangId == leonbasic",
+                    "group": "navigation"
                 }
             ]
         }
     },
+    "activationEvents": [
+        "onLanguage:leonbasic"
+    ],
     "scripts": {
         "package": "vsce package"
+    },
+    "configuration": {
+        "type": "object",
+        "title": "LeonBasic",
+        "properties": {
+            "leonbasic.useCompilerForLinting": {
+                "type": "boolean",
+                "default": false,
+                "description": "是否使用编译器进行语法检查"
+            }
+        }
     },
     "devDependencies": {
         "@vscode/vsce": "^2.20.1"
