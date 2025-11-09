@@ -1,12 +1,13 @@
 {
     "name": "leonbasic",
     "displayName": "LeonBasic Language Support",
-    "description": "Syntax highlighting and language support for LeonBasic programming language",
-    "version": "0.0.1",
-    "publisher": "LeonLangTeam",
+    "description": "Syntax highlighting, language support and code execution for LeonBasic programming language",
+    "version": "0.0.4",
+    "publisher": "LeonBasicTeam",
     "engines": {
         "vscode": "^1.60.0"
     },
+    "main": "./extension.js",
     "categories": [
         "Programming Languages"
     ],
@@ -25,6 +26,42 @@
                 "scopeName": "source.leonbasic",
                 "path": "./syntaxes/leonbasic.tmLanguage.json"
             }
-        ]
+        ],
+        "commands": [
+            {
+                "command": "leonbasic.runCode",
+                "title": "Run LeonBasic Code",
+                "category": "LeonBasic"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "leonbasic.runCode",
+                "key": "F5",
+                "when": "editorLangId == leonbasic"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "leonbasic.runCode",
+                    "when": "editorLangId == leonbasic",
+                    "group": "navigation"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "leonbasic.runCode",
+                    "when": "editorLangId == leonbasic",
+                    "group": "navigation"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "package": "vsce package"
+    },
+    "devDependencies": {
+        "@vscode/vsce": "^2.20.1"
     }
 }
