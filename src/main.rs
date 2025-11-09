@@ -1232,6 +1232,7 @@ fn main() {
     // 注册内置函数
     builtins::register_basic_functions(&mut env);
     builtins::register_request_functions(&mut env);
+    builtins::register_time_functions(&mut env);
     
     match File::open(file_path) {
         Ok(mut file) => {
@@ -1255,9 +1256,12 @@ fn start_shell() {
     
     let mut env = Env::new(false); // shell模式默认不开启调试
     
-    // 默认加载basic库
+    // 默认加载basic库和time库
     if let Err(e) = env.handle_require("require(\"basic\")") {
         println!("警告: 无法加载basic库: {}", e);
+    }
+    if let Err(e) = env.handle_require("require(\"time\")") {
+        println!("警告: 无法加载time库: {}", e);
     }
     
     loop {

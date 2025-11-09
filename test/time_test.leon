@@ -1,0 +1,48 @@
+require("basic");
+require("time");
+
+// 测试获取当前时间戳
+basic.print(string:"当前时间戳（毫秒）: ");
+var(timestamp) = time.now();
+basic.print(var(timestamp));
+
+// 测试获取当前时间
+basic.print(string:"\n当前时间（默认格式）: ");
+var(current) = time.currentTime();
+basic.print(var(current));
+
+// 测试自定义格式
+basic.print(string:"\n当前时间（自定义格式）: ");
+var(custom) = time.currentTime(string:"%Y/%m/%d %H-%M-%S");
+basic.print(var(custom));
+
+// 测试格式化指定时间戳
+basic.print(string:"\n格式化指定时间戳: ");
+var(formatted) = time.formatTime(var(timestamp), string:"%Y-%m-%d %H:%M:%S");
+basic.print(var(formatted));
+
+// 测试sleep函数
+basic.print(string:"\n等待2秒...");
+time.sleep(int:2000);
+basic.print(string:"等待结束");
+
+// 测试时间差计算
+basic.print(string:"\n测试时间差计算：");
+var(start) = time.now();
+basic.print(string:"开始时间戳: " + string:var(start));
+time.sleep(int:1000);
+var(end) = time.now();
+basic.print(string:"结束时间戳: " + string:var(end));
+var(diff) = time.diffTime(var(start), var(end));
+basic.print(string:"时间差（毫秒）: " + string:var(diff));
+
+// 测试today和currentTimeOnly函数
+basic.print(string:"\n今天的日期: ");
+var(today) = time.today();
+basic.print(var(today));
+
+basic.print(string:"当前的时间: ");
+var(now_time) = time.currentTimeOnly();
+basic.print(var(now_time));
+
+basic.pause();

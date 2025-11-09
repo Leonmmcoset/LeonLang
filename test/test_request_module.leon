@@ -1,12 +1,10 @@
 // 测试request模块的使用
 // 首先测试require request
 require("request");
-
 // 然后测试使用request模块的函数
 basic.print(string:"测试request.get:");
 var(response) = request.get(string:"https://example.com");
 basic.print(var(response));
-
 basic.print(string:"\n测试request.check:");
 var(status) = request.check(string:"https://example.com");
 basic.print(string:"状态码: " + var(status));

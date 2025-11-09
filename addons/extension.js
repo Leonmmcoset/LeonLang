@@ -5,6 +5,8 @@ const fs = require('fs');
 
 // 用于存储和显示语法错误的诊断集合
 let diagnosticCollection = null;
+// 内存中缓存的编译器路径，确保即使配置保存失败也能在当前会话中使用
+let cachedCompilerPath = null;
 
 /**
  * 激活扩展
@@ -15,14 +17,28 @@ function activate(context) {
     diagnosticCollection = vscode.languages.createDiagnosticCollection('leonbasic');
     context.subscriptions.push(diagnosticCollection);
     
-    // 注册语法检测命令
-    let lintDisposable = vscode.commands.registerCommand('leonbasic.lintCode', async function() {
-        const editor = vscode.window.activeTextEditor;
-        if (editor && editor.document.languageId === 'leonbasic') {
-            lintDocument(editor.document);
+    // 尝试从配置中加载编译器路径到缓存
+    try {
+        const config = vscode.workspace.getConfiguration('leonbasic');
+        const savedPath = config.get('compilerPath', '');
+        if (savedPath) {
+            cachedCompilerPath = savedPath;
+            console.log(`已从配置加载编译器路径: ${savedPath}`);
+        }
+    } catch (error) {
+        console.log('加载配置失败，但仍可正常使用扩展');
+    }
+    
+    // 监听文档更改事件，实现实时语法检查
+    let changeDisposable = vscode.workspace.onDidChangeTextDocument(event => {
+        if (event.document.languageId === 'leonbasic') {
+            // 延迟检查，避免频繁触发
+            setTimeout(() => {
+                lintDocument(event.document);
+            }, 500);
         }
     });
-    context.subscriptions.push(lintDisposable);
+    context.subscriptions.push(changeDisposable);
     
     // 监听文件保存事件
     let saveDisposable = vscode.workspace.onDidSaveTextDocument(document => {
@@ -46,6 +62,127 @@ function activate(context) {
             lintDocument(editor.document);
         }
     }
+    // 获取编译器路径
+    async function getCompilerPath() {
+        // 优先使用内存缓存的路径
+        if (cachedCompilerPath) {
+            console.log(`使用缓存的编译器路径: ${cachedCompilerPath}`);
+            return cachedCompilerPath;
+        }
+        
+        // 如果缓存中没有，尝试从配置中获取
+        let compilerPath = '';
+        try {
+            const config = vscode.workspace.getConfiguration('leonbasic');
+            compilerPath = config.get('compilerPath', '');
+        } catch (error) {
+            console.log('读取配置失败，将使用选择模式');
+        }
+        
+        // 如果没有保存的路径，让用户选择
+        if (!compilerPath) {
+            const options = {
+                title: '选择LeonBasic可执行文件',
+                filters: {
+                    '可执行文件': ['exe'],
+                    '所有文件': ['*']
+                },
+                canSelectMany: false
+            };
+            
+            const result = await vscode.window.showOpenDialog(options);
+            if (!result || result.length === 0) {
+                return null;
+            }
+            
+            compilerPath = result[0].fsPath;
+            // 首先更新内存缓存，确保当前会话可用
+            cachedCompilerPath = compilerPath;
+            
+            // 尝试保存到配置中（可选，即使失败也不影响使用）
+            try {
+                const config = vscode.workspace.getConfiguration('leonbasic');
+                // 尝试多种配置范围
+                const scopes = [
+                    vscode.ConfigurationTarget.WorkspaceFolder,
+                    vscode.ConfigurationTarget.Workspace,
+                    vscode.ConfigurationTarget.Global
+                ];
+                
+                for (const scope of scopes) {
+                    try {
+                        await config.update('compilerPath', compilerPath, scope);
+                        vscode.window.showInformationMessage(`已保存编译器路径: ${compilerPath}`);
+                        break; // 保存成功则退出循环
+                    } catch (scopeError) {
+                        console.log(`使用 ${scope} 保存配置失败: ${scopeError.message}`);
+                        // 继续尝试下一个范围
+                    }
+                }
+            } catch (error) {
+                // 即使配置保存失败，由于已经更新了缓存，用户仍可以在当前会话中使用
+                vscode.window.showInformationMessage(`编译器路径已设置: ${compilerPath}`);
+            }
+        } else {
+            // 将配置中的路径也缓存起来
+            cachedCompilerPath = compilerPath;
+        }
+        
+        return compilerPath;
+    }
+    
+    // 注册更改编译器路径命令
+    let changeCompilerPathDisposable = vscode.commands.registerCommand('leonbasic.changeCompilerPath', async function () {
+        const options = {
+            title: '选择LeonBasic可执行文件',
+            filters: {
+                '可执行文件': ['exe'],
+                '所有文件': ['*']
+            },
+            canSelectMany: false
+        };
+        
+        const result = await vscode.window.showOpenDialog(options);
+        if (result && result.length > 0) {
+            const compilerPath = result[0].fsPath;
+            
+            // 首先更新内存缓存
+            cachedCompilerPath = compilerPath;
+            
+            // 尝试保存到配置中（可选）
+            let configSaved = false;
+            try {
+                const config = vscode.workspace.getConfiguration('leonbasic');
+                // 尝试多种配置范围
+                const scopes = [
+                    vscode.ConfigurationTarget.WorkspaceFolder,
+                    vscode.ConfigurationTarget.Workspace,
+                    vscode.ConfigurationTarget.Global
+                ];
+                
+                for (const scope of scopes) {
+                    try {
+                        await config.update('compilerPath', compilerPath, scope);
+                        configSaved = true;
+                        break;
+                    } catch (scopeError) {
+                        // 继续尝试下一个范围
+                    }
+                }
+            } catch (error) {
+                // 忽略错误，因为内存缓存已经更新
+            }
+            
+            // 根据保存结果显示不同的消息
+            if (configSaved) {
+                vscode.window.showInformationMessage(`已更新编译器路径: ${compilerPath}`);
+            } else {
+                vscode.window.showInformationMessage(`编译器路径已更新: ${compilerPath}`);
+            }
+        }
+    });
+    context.subscriptions.push(changeCompilerPathDisposable);
+    
     // 注册运行代码命令
     let disposable = vscode.commands.registerCommand('leonbasic.runCode', async function () {
         // 获取当前活动编辑器
@@ -63,23 +200,12 @@ function activate(context) {
         // 获取文件路径
         const filePath = editor.document.uri.fsPath;
         
-        // 让用户选择leonlang可执行文件
-        const options = {
-            title: '选择LeonBasic可执行文件',
-            filters: {
-                '可执行文件': ['exe'],
-                '所有文件': ['*']
-            },
-            canSelectMany: false
-        };
-        
-        const result = await vscode.window.showOpenDialog(options);
-        if (!result || result.length === 0) {
+        // 获取编译器路径（从配置中读取或让用户选择）
+        const leonlangPath = await getCompilerPath();
+        if (!leonlangPath) {
             vscode.window.showInformationMessage('未选择LeonBasic可执行文件');
             return;
         }
-        
-        const leonlangPath = result[0].fsPath;
 
         // 显示输出通道
         const outputChannel = vscode.window.createOutputChannel('LeonBasic');
@@ -310,22 +436,14 @@ function getMatchingBracket(bracket) {
  */
 async function checkWithCompiler(document, diagnostics) {
     try {
-        // 让用户选择leonlang可执行文件
-        const options = {
-            title: '选择LeonBasic可执行文件进行语法检查',
-            filters: {
-                '可执行文件': ['exe'],
-                '所有文件': ['*']
-            },
-            canSelectMany: false
-        };
+        // 使用getCompilerPath函数获取编译器路径（会优先使用缓存）
+        const leonlangPath = await getCompilerPath();
         
-        const result = await vscode.window.showOpenDialog(options);
-        if (!result || result.length === 0) {
+        if (!leonlangPath) {
+            vscode.window.showInformationMessage('请先设置LeonBasic编译器路径');
             return;
         }
         
-        const leonlangPath = result[0].fsPath;
         const filePath = document.uri.fsPath;
         
         // 执行编译检查（使用--check或类似参数，如果支持的话）

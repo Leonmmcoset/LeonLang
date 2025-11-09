@@ -17,4 +17,4 @@ var(part1) = string:"Hello ";
 var(part2) = string:"World!\n";
 var(part3) = string:"Welcome\tto\tLeonBasic";
 var(full) = var(part1) + var(part2) + var(part3);
-basic.print(full);
+basic.print(var(full));
