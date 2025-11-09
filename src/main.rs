@@ -5,6 +5,8 @@ use std::path::Path;
 
 // 导入内置库模块
 mod builtins;
+// 导入版本信息
+mod version;
 
 // 定义值的类型
 #[derive(Debug)]
@@ -1187,6 +1189,14 @@ impl Env {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     
+    // 检查版本号参数
+    for arg in &args[1..] {
+        if arg == "--version" || arg == "--ver" {
+            println!("LeonBasic 解释器 v{}", version::VERSION);
+            return;
+        }
+    }
+    
     // 检查是否启动shell模式
     if args.len() == 2 && args[1] == "--shell" {
         start_shell();
@@ -1215,9 +1225,10 @@ fn main() {
     let file_path = match file_path {
         Some(path) => path,
         None => {
-            println!("LeonBasic 解释器 v0.1.0");
+            println!("LeonBasic 解释器 v{}", version::VERSION);
             println!("用法: leonlang <文件> [--debug]");
             println!("用法: leonlang --shell  # 启动交互式shell");
+            println!("用法: leonlang --version 或 --ver  # 查看版本号");
             return;
         }
     };
