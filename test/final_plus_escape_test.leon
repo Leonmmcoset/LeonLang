@@ -1,0 +1,13 @@
+require("basic");
+
+// 最终测试：确保\+转义为+
+basic.print(string:"这是一个+号");
+basic.print(string:"这是一个\+转义后的+号");
+
+// 测试在各种上下文中的转义
+basic.print(string:"A\+B = C");
+basic.print(string:"\\+显示为：\+");
+
+// 测试变量中使用
+var(plus) = string:"\+";
+basic.print(string:"变量中的+：" + var(plus));

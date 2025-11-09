@@ -5,7 +5,7 @@ basic.print("测试加载外部模块...");
 
 // 测试utils模块的add函数
 var(sum) = utils.add(int:5, int:3);
-basic.print(string:"5 + 3 = " + string:var(sum));
+basic.print(string:"5 \+ 3 = " + string:var(sum));
 
 // 测试utils模块的greet函数
 var(greeting) = utils.greet(string:"World");

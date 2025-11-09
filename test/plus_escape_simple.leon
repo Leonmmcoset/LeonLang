@@ -1,0 +1,4 @@
+require("basic");
+
+// 简单测试\+转义字符功能
+basic.print(string:"测试+转义：字符串中的\+");

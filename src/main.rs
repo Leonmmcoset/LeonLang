@@ -835,20 +835,13 @@ impl Env {
                         // 清理参数，去除分号和注释
                         let clean_part = part.split(';').next().unwrap_or("").trim();
                         
-                        // 首先尝试作为表达式处理，以支持字符串拼接
-                        let value = match self.evaluate_expression(clean_part) {
-                            Ok(expr_value) => expr_value,
-                            // 如果不是表达式，再尝试其他格式
-                            Err(_) => {
-                                // 检查是否是self()格式
-                                if clean_part.starts_with("self(") && clean_part.ends_with(")") {
-                                    // 提取self()中的参数内容
-                                    let inner_content = clean_part.trim_start_matches("self(").trim_end_matches(")");
-                                    self.parse_value(inner_content)?
-                                } else {
-                                    self.parse_value(clean_part)?
-                                }
-                            }
+                        // 检查是否是self()格式
+                        let value = if clean_part.starts_with("self(") && clean_part.ends_with(")") {
+                            // 提取self()中的参数内容
+                            let inner_content = clean_part.trim_start_matches("self(").trim_end_matches(")");
+                            self.parse_value(inner_content)?
+                        } else {
+                            self.parse_value(clean_part)?
                         };
                         args_vec.push(value);
                     }
@@ -866,8 +859,10 @@ impl Env {
     }
     
     fn parse_value(&self, value_str: &str) -> Result<Value, String> {
-        // 注意：不再在parse_value中处理拼接表达式，避免递归调用导致的问题
-        // 拼接表达式应由evaluate_expression直接处理
+        // 先检查是否包含字符串拼接表达式
+        if value_str.contains(" + ") {
+            return self.evaluate_expression(value_str);
+        }
         
         // 处理变量引用
         if value_str.starts_with("var(") {
@@ -920,9 +915,14 @@ impl Env {
                             '"' => result.push('"'),   // 双引号
                             '\\' => result.push('\\'), // 反斜杠
                             _ => {
-                                // 其他转义序列保持原样
-                                result.push('\\');
-                                result.push(next_char);
+                                // 特殊处理\+只显示为+
+                                if next_char == '+' {
+                                    result.push('+');
+                                } else {
+                                    // 其他转义序列保持原样
+                                    result.push('\\');
+                                    result.push(next_char);
+                                }
                             }
                         }
                     } else {
@@ -960,18 +960,14 @@ impl Env {
     
     fn evaluate_expression(&self, expr: &str) -> Result<Value, String> {
         // 处理字符串拼接表达式
-        // 检查是否包含拼接操作符
-        if expr.contains(" + ") {
-            let parts: Vec<&str> = expr.split(" + ").collect();
-            let mut result = String::new();
+        let parts: Vec<&str> = expr.split(" + ").collect();
+        let mut result = String::new();
+        
+        for part in parts {
+            // 递归解析每个部分的值
+            let value = self.parse_value_without_expression(part.trim())?;
             
-            for part in parts {
-                let trimmed_part = part.trim();
-                
-                // 直接使用parse_value_without_expression来避免递归调用拼接逻辑
-                let value = self.parse_value_without_expression(trimmed_part)?;
-                
-                // 将所有值转换为字符串并拼接
+            // 将所有值转换为字符串并拼接
                 match value {
                     Value::String(s) => result.push_str(&s),
                     Value::Int(i) => result.push_str(&i.to_string()),
@@ -979,27 +975,7 @@ impl Env {
                     Value::Null => result.push_str("null"),
                     Value::File(_) => result.push_str("[file handle]"),
                 }
-            }
-            
-            return Ok(Value::String(result));
         }
-        
-        // 如果是string:开头的表达式，直接使用parse_value处理
-        if expr.starts_with("string:") {
-            return self.parse_value(expr.trim());
-        }
-        
-        // 处理单个值的情况
-        let value = self.parse_value(expr.trim())?;
-        
-        // 将值转换为字符串
-        let result = match value {
-            Value::String(s) => s,
-            Value::Int(i) => i.to_string(),
-            Value::Float(f) => f.to_string(),
-            Value::Null => "null".to_string(),
-            Value::File(_) => "[file handle]".to_string(),
-        };
         
         Ok(Value::String(result))
     }
@@ -1134,15 +1110,15 @@ impl Env {
             if content_part.starts_with("var(") {
                 // 获取变量名
                 let var_name = content_part.trim_start_matches("var(").trim_end_matches(")");
-                // 直接查找变量值并转换为字符串
                 if let Some(val) = self.variables.get(var_name) {
-                    match val {
-                        Value::String(s) => return Ok(Value::String(s.clone())),
-                        Value::Int(i) => return Ok(Value::String(i.to_string())),
-                        Value::Float(f) => return Ok(Value::String(f.to_string())),
-                        Value::Null => return Ok(Value::String("null".to_string())),
-                        Value::File(_) => return Ok(Value::String("[file handle]".to_string())),
-                    }
+                    // 将变量的值转换为字符串
+                    return match val {
+                        Value::String(s) => Ok(Value::String(s.clone())),
+                        Value::Int(i) => Ok(Value::String(i.to_string())),
+                        Value::Float(f) => Ok(Value::String(f.to_string())),
+                        Value::Null => Ok(Value::String("null".to_string())),
+                        Value::File(_) => Ok(Value::String("[file handle]".to_string())),
+                    };
                 } else {
                     return Err(format!("未定义的变量: {}", var_name));
                 }
@@ -1163,8 +1139,13 @@ impl Env {
                             '"' => result.push('"'),
                             '\\' => result.push('\\'),
                             _ => {
-                                result.push('\\');
-                                result.push(next_char);
+                                // 特殊处理\+只显示为+
+                                if next_char == '+' {
+                                    result.push('+');
+                                } else {
+                                    result.push('\\');
+                                    result.push(next_char);
+                                }
                             }
                         }
                     } else {

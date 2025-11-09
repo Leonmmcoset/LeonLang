@@ -13,21 +13,25 @@
       
       
       
+        <link rel="prev" href="../getting-started/">
       
       
-      <link rel="icon" href="/assets/images/favicon.png">
+        <link rel="next" href="../network/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
     
     
       
-        <title>LeonBasic Programming Language</title>
+        <title>Module System - LeonBasic Programming Language</title>
       
     
     
-      <link rel="stylesheet" href="/assets/stylesheets/main.84d31ad4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
       
         
-        <link rel="stylesheet" href="/assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -46,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +75,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#module-system" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -85,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/." title="LeonBasic Programming Language" class="md-header__button md-logo" aria-label="LeonBasic Programming Language" data-md-component="logo">
+    <a href="../.." title="LeonBasic Programming Language" class="md-header__button md-logo" aria-label="LeonBasic Programming Language" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -105,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Module System
             
           </span>
         </div>
@@ -232,7 +241,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -253,7 +262,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="/cn/" class="md-tabs__link">
+        <a href="../../cn/" class="md-tabs__link">
           
   
   
@@ -269,11 +278,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="/en/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -307,7 +318,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/." title="LeonBasic Programming Language" class="md-nav__button md-logo" aria-label="LeonBasic Programming Language" data-md-component="logo">
+    <a href="../.." title="LeonBasic Programming Language" class="md-nav__button md-logo" aria-label="LeonBasic Programming Language" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -325,7 +336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -390,7 +401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/" class="md-nav__link">
+      <a href="../../cn/" class="md-nav__link">
         
   
   
@@ -413,7 +424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/basic-syntax/" class="md-nav__link">
+      <a href="../../cn/basic-syntax/" class="md-nav__link">
         
   
   
@@ -436,7 +447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/control-flow/" class="md-nav__link">
+      <a href="../../cn/control-flow/" class="md-nav__link">
         
   
   
@@ -459,7 +470,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/error-handling/" class="md-nav__link">
+      <a href="../../cn/error-handling/" class="md-nav__link">
         
   
   
@@ -482,7 +493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/file-operations/" class="md-nav__link">
+      <a href="../../cn/file-operations/" class="md-nav__link">
         
   
   
@@ -505,7 +516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/getting-started/" class="md-nav__link">
+      <a href="../../cn/getting-started/" class="md-nav__link">
         
   
   
@@ -528,7 +539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/module-system/" class="md-nav__link">
+      <a href="../../cn/module-system/" class="md-nav__link">
         
   
   
@@ -551,7 +562,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/network/" class="md-nav__link">
+      <a href="../../cn/network/" class="md-nav__link">
         
   
   
@@ -574,7 +585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/user-interaction/" class="md-nav__link">
+      <a href="../../cn/user-interaction/" class="md-nav__link">
         
   
   
@@ -601,26 +612,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -633,7 +649,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             En
@@ -647,7 +663,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -670,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/basic-syntax/" class="md-nav__link">
+      <a href="../basic-syntax/" class="md-nav__link">
         
   
   
@@ -693,7 +709,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/control-flow/" class="md-nav__link">
+      <a href="../control-flow/" class="md-nav__link">
         
   
   
@@ -716,7 +732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/error-handling/" class="md-nav__link">
+      <a href="../error-handling/" class="md-nav__link">
         
   
   
@@ -739,7 +755,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/file-operations/" class="md-nav__link">
+      <a href="../file-operations/" class="md-nav__link">
         
   
   
@@ -762,7 +778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -782,10 +798,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/en/module-system/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Module System
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -796,6 +834,128 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-require-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. require Function
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. require Function">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-importing-built-in-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      (1) Importing Built-in Libraries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-importing-custom-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      (2) Importing Custom Modules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-module-search-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Module Search Path
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-creating-custom-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Creating Custom Modules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Creating Custom Modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-creating-a-simple-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      (1) Creating a Simple Module
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-module-usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      (2) Module Usage Example
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-setting-require-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Setting require Path
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-module-function-call-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Module Function Call Syntax
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-module-loading-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Module Loading Notes
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -808,7 +968,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/network/" class="md-nav__link">
+      <a href="../network/" class="md-nav__link">
         
   
   
@@ -831,7 +991,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/user-interaction/" class="md-nav__link">
+      <a href="../user-interaction/" class="md-nav__link">
         
   
   
@@ -871,6 +1031,118 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-require-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. require Function
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. require Function">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-importing-built-in-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      (1) Importing Built-in Libraries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-importing-custom-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      (2) Importing Custom Modules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-module-search-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Module Search Path
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-creating-custom-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Creating Custom Modules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Creating Custom Modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-creating-a-simple-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      (1) Creating a Simple Module
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-module-usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      (2) Module Usage Example
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-setting-require-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Setting require Path
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-module-function-call-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Module Function Call Syntax
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-module-loading-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Module Loading Notes
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -882,8 +1154,103 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+
+<h1 id="module-system">Module System<a class="headerlink" href="#module-system" title="Permanent link">&para;</a></h1>
+<h2 id="1-require-function">1. require Function<a class="headerlink" href="#1-require-function" title="Permanent link">&para;</a></h2>
+<p>LeonBasic provides the <code>require()</code> function for importing built-in libraries and custom modules, enabling code modularity and reuse.</p>
+<h3 id="1-importing-built-in-libraries">(1) Importing Built-in Libraries<a class="headerlink" href="#1-importing-built-in-libraries" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>// Import basic library
+require(&quot;basic&quot;);
+
+// Import network request library
+require(&quot;request&quot;);
+</code></pre></div>
+<h3 id="2-importing-custom-modules">(2) Importing Custom Modules<a class="headerlink" href="#2-importing-custom-modules" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>// Import utils.leon module from the current directory
+require(&quot;utils&quot;);
+
+// Use functions from the module
+var(result) = utils.add(int:5, int:3);
+basic.print(string:&quot;5 + 3 = &quot; + string:var(result));
+</code></pre></div>
+<h2 id="2-module-search-path">2. Module Search Path<a class="headerlink" href="#2-module-search-path" title="Permanent link">&para;</a></h2>
+<p>When using <code>require(module_name)</code>, the system will search for modules in the following order:</p>
+<ol>
+<li>First, look for built-in libraries (such as basic, request)</li>
+<li>Then look for <code>module_name.leon</code> file in the current script's directory</li>
+<li>If not found, it will look in the <code>lib</code> subdirectory of the current directory</li>
+</ol>
+<h2 id="3-creating-custom-modules">3. Creating Custom Modules<a class="headerlink" href="#3-creating-custom-modules" title="Permanent link">&para;</a></h2>
+<h3 id="1-creating-a-simple-module">(1) Creating a Simple Module<a class="headerlink" href="#1-creating-a-simple-module" title="Permanent link">&para;</a></h3>
+<p>Create a file named <code>utils.leon</code>:</p>
+<div class="highlight"><pre><span></span><code>// utils.leon
+
+// Define module functions
+func(add(a, b)) = {
+    return a + b;
+};
+
+func(multiply(a, b)) = {
+    return a * b;
+};
+
+func(greet(name)) = {
+    return &quot;Hello, &quot; + name + &quot;!&quot;;
+};
+</code></pre></div>
+<h3 id="2-module-usage-example">(2) Module Usage Example<a class="headerlink" href="#2-module-usage-example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>// main.leon
+require(&quot;basic&quot;);
+require(&quot;utils&quot;);
+
+// Use functions from the utils module
+var(sum) = utils.add(int:5, int:3);
+basic.print(string:&quot;5 + 3 = &quot; + string:var(sum));
+
+var(product) = utils.multiply(int:7, int:4);
+basic.print(string:&quot;7 * 4 = &quot; + string:var(product));
+
+var(greeting) = utils.greet(string:&quot;World&quot;);
+basic.print(var(greeting));
+</code></pre></div>
+<h2 id="4-setting-require-path">4. Setting require Path<a class="headerlink" href="#4-setting-require-path" title="Permanent link">&para;</a></h2>
+<p>You can use the <code>basic.setrequirepath()</code> function to customize the module search path:</p>
+<div class="highlight"><pre><span></span><code>require(&quot;basic&quot;);
+
+// Set custom module path
+basic.setrequirepath(&quot;C:\\Projects\\LeonBasic\\modules&quot;);
+
+// Now you can load modules from the custom path
+require(&quot;custom_module&quot;);
+</code></pre></div>
+<h2 id="5-module-function-call-syntax">5. Module Function Call Syntax<a class="headerlink" href="#5-module-function-call-syntax" title="Permanent link">&para;</a></h2>
+<p>When using imported module functions, follow this syntax:</p>
+<div class="highlight"><pre><span></span><code>// module_name.function_name(param1, param2, ...)
+module_name.function_name(param1, param2, ...);
+</code></pre></div>
+<h2 id="6-module-loading-notes">6. Module Loading Notes<a class="headerlink" href="#6-module-loading-notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Module files must have the <code>.leon</code> extension</li>
+<li>A module can be imported multiple times but will only be executed once</li>
+<li>Variables and functions in a module are visible to the importer</li>
+<li>Modules can import each other, but avoid circular dependencies</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -935,10 +1302,10 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "/", "features": ["content.code.annotate", "content.code.copy", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "toc.follow", "navigation.instant"], "search": "/assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "1.0.0"}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.annotate", "content.code.copy", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "toc.follow", "navigation.instant"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "1.0.0"}</script>
     
     
-      <script src="/assets/javascripts/bundle.f55a23d4.min.js"></script>
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
     
   </body>

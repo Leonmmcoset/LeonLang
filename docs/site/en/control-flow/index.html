@@ -13,21 +13,25 @@
       
       
       
+        <link rel="prev" href="../basic-syntax/">
       
       
-      <link rel="icon" href="/assets/images/favicon.png">
+        <link rel="next" href="../error-handling/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
     
     
       
-        <title>LeonBasic Programming Language</title>
+        <title>Control Flow - LeonBasic Programming Language</title>
       
     
     
-      <link rel="stylesheet" href="/assets/stylesheets/main.84d31ad4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
       
         
-        <link rel="stylesheet" href="/assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -46,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +75,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#control-flow" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -85,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/." title="LeonBasic Programming Language" class="md-header__button md-logo" aria-label="LeonBasic Programming Language" data-md-component="logo">
+    <a href="../.." title="LeonBasic Programming Language" class="md-header__button md-logo" aria-label="LeonBasic Programming Language" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -105,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Control Flow
             
           </span>
         </div>
@@ -232,7 +241,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -253,7 +262,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="/cn/" class="md-tabs__link">
+        <a href="../../cn/" class="md-tabs__link">
           
   
   
@@ -269,11 +278,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="/en/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -307,7 +318,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/." title="LeonBasic Programming Language" class="md-nav__button md-logo" aria-label="LeonBasic Programming Language" data-md-component="logo">
+    <a href="../.." title="LeonBasic Programming Language" class="md-nav__button md-logo" aria-label="LeonBasic Programming Language" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -325,7 +336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -390,7 +401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/" class="md-nav__link">
+      <a href="../../cn/" class="md-nav__link">
         
   
   
@@ -413,7 +424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/basic-syntax/" class="md-nav__link">
+      <a href="../../cn/basic-syntax/" class="md-nav__link">
         
   
   
@@ -436,7 +447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/control-flow/" class="md-nav__link">
+      <a href="../../cn/control-flow/" class="md-nav__link">
         
   
   
@@ -459,7 +470,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/error-handling/" class="md-nav__link">
+      <a href="../../cn/error-handling/" class="md-nav__link">
         
   
   
@@ -482,7 +493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/file-operations/" class="md-nav__link">
+      <a href="../../cn/file-operations/" class="md-nav__link">
         
   
   
@@ -505,7 +516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/getting-started/" class="md-nav__link">
+      <a href="../../cn/getting-started/" class="md-nav__link">
         
   
   
@@ -528,7 +539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/module-system/" class="md-nav__link">
+      <a href="../../cn/module-system/" class="md-nav__link">
         
   
   
@@ -551,7 +562,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/network/" class="md-nav__link">
+      <a href="../../cn/network/" class="md-nav__link">
         
   
   
@@ -574,7 +585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/cn/user-interaction/" class="md-nav__link">
+      <a href="../../cn/user-interaction/" class="md-nav__link">
         
   
   
@@ -601,26 +612,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -633,7 +649,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             En
@@ -647,7 +663,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -670,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/basic-syntax/" class="md-nav__link">
+      <a href="../basic-syntax/" class="md-nav__link">
         
   
   
@@ -690,10 +706,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/en/control-flow/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Control Flow
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -704,6 +742,71 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-conditional-statements-if-else" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Conditional Statements (if-else)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-loops-forwhile" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Loops (for/while)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-nested-conditional-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Nested Conditional Statements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-nested-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Nested Loops
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-comparison-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Comparison Operators
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -716,7 +819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/error-handling/" class="md-nav__link">
+      <a href="../error-handling/" class="md-nav__link">
         
   
   
@@ -739,7 +842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/file-operations/" class="md-nav__link">
+      <a href="../file-operations/" class="md-nav__link">
         
   
   
@@ -762,7 +865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -785,7 +888,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/module-system/" class="md-nav__link">
+      <a href="../module-system/" class="md-nav__link">
         
   
   
@@ -808,7 +911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/network/" class="md-nav__link">
+      <a href="../network/" class="md-nav__link">
         
   
   
@@ -831,7 +934,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/en/user-interaction/" class="md-nav__link">
+      <a href="../user-interaction/" class="md-nav__link">
         
   
   
@@ -871,6 +974,61 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-conditional-statements-if-else" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Conditional Statements (if-else)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-loops-forwhile" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Loops (for/while)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-nested-conditional-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Nested Conditional Statements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-nested-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Nested Loops
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-comparison-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Comparison Operators
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -882,8 +1040,94 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+
+<h1 id="control-flow">Control Flow<a class="headerlink" href="#control-flow" title="Permanent link">&para;</a></h1>
+<h2 id="1-conditional-statements-if-else">1. Conditional Statements (if-else)<a class="headerlink" href="#1-conditional-statements-if-else" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>require(&quot;basic&quot;);
+var(a) = int:5;
+if(a &gt; 3) {
+    basic.print(&quot;a is greater than 3&quot;);
+} else {
+    basic.print(&quot;a is not greater than 3&quot;);
+}
+</code></pre></div>
+<h2 id="2-loops-forwhile">2. Loops (for/while)<a class="headerlink" href="#2-loops-forwhile" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>require(&quot;basic&quot;);
+
+// for loop
+for(var(i) = int:0; i &lt; 5; i = i + 1) {
+    basic.print(string:&quot;Loop count: &quot; + string:i);
+}
+
+// while loop
+var(j) = int:0;
+while(j &lt; 3) {
+    basic.print(string:&quot;While loop: &quot; + string:j);
+    j = j + 1;
+}
+</code></pre></div>
+<h2 id="3-nested-conditional-statements">3. Nested Conditional Statements<a class="headerlink" href="#3-nested-conditional-statements" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>require(&quot;basic&quot;);
+var(score) = int:85;
+
+if(score &gt;= 90) {
+    basic.print(&quot;Excellent!&quot;);
+} else if(score &gt;= 80) {
+    basic.print(&quot;Good!&quot;);
+} else if(score &gt;= 60) {
+    basic.print(&quot;Pass.&quot;);
+} else {
+    basic.print(&quot;Fail.&quot;);
+}
+</code></pre></div>
+<h2 id="4-nested-loops">4. Nested Loops<a class="headerlink" href="#4-nested-loops" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>require(&quot;basic&quot;);
+
+// Nested for loops
+for(var(row) = int:1; row &lt;= 3; row = row + 1) {
+    for(var(col) = int:1; col &lt;= 3; col = col + 1) {
+        basic.print(string:&quot;Row &quot; + string:row + &quot;, Column &quot; + string:col);
+    }
+}
+</code></pre></div>
+<h2 id="5-comparison-operators">5. Comparison Operators<a class="headerlink" href="#5-comparison-operators" title="Permanent link">&para;</a></h2>
+<p>LeonBasic supports the following comparison operators in conditional statements:</p>
+<ul>
+<li><code>&gt;</code>: Greater than</li>
+<li><code>&lt;</code>: Less than</li>
+<li><code>&gt;=</code>: Greater than or equal to</li>
+<li><code>&lt;=</code>: Less than or equal to</li>
+<li><code>==</code>: Equal to</li>
+<li><code>!=</code>: Not equal to</li>
+</ul>
+<div class="highlight"><pre><span></span><code>require(&quot;basic&quot;);
+var(x) = int:10;
+var(y) = int:5;
+
+if(x &gt; y) {
+    basic.print(&quot;x is greater than y&quot;);
+}
+
+if(x != y) {
+    basic.print(&quot;x is not equal to y&quot;);
+}
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -935,10 +1179,10 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "/", "features": ["content.code.annotate", "content.code.copy", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "toc.follow", "navigation.instant"], "search": "/assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "1.0.0"}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.annotate", "content.code.copy", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "toc.follow", "navigation.instant"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "1.0.0"}</script>
     
     
-      <script src="/assets/javascripts/bundle.f55a23d4.min.js"></script>
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
     
   </body>

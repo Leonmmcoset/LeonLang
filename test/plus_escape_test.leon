@@ -1,0 +1,18 @@
+require("basic");
+
+// 测试\+转义字符功能
+basic.print(string:"测试\\+转义：字符串中的\\+");
+
+// 测试\+在不同位置
+basic.print(string:"前缀\\+：\\+abc");
+basic.print(string:"中间\\+：abc\\+def");
+basic.print(string:"后缀\\+：abc\\+");
+
+// 测试多个\+连续出现
+basic.print(string:"多个\\+：\\+\\+\\+");
+
+// 测试\+与其他转义字符组合
+basic.print(string:"组合测试：\\n换行符\\+\\t制表符");
+
+// 测试\+在拼接中
+basic.print(string:"拼接\\+：" + string:"\+" + string:"成功");

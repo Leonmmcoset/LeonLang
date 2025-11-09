@@ -39,7 +39,46 @@ basic.print(var(c));
 * int：整数
 * float：浮点数
 
-## 3. 自定义函数
+## 4. 转义字符
+
+在字符串中，可以使用转义字符来表示特殊字符：
+
+### (1) 支持的转义字符
+
+* `\n`：换行符
+* `\t`：制表符
+* `\r`：回车符
+* `\"`：双引号
+* `\\`：反斜杠
+* `\+`：加号（特殊转义，显示为+）
+
+### (2) 转义字符示例
+
+```leon
+require("basic");
+
+// 基本转义字符
+basic.print(string:"第一行\n第二行");
+
+// 转义双引号
+basic.print(string:"他说：\"你好！\"");
+
+// \+转义为+
+basic.print(string:"5 \+ 3 = 8");
+
+// 反斜杠转义
+basic.print(string:"路径：C:\\\\folder\\\\file.txt");
+```
+
+### (3) 转义字符在字符串拼接中的使用
+
+```leon
+require("basic");
+var(a) = string:"Hello ";
+var(b) = string:"\+ World!";
+basic.print(var(a) + var(b));  // 输出：Hello + World!
+
+## 5. 自定义函数
 
 ### (1) 无参数函数
 ```leon
@@ -66,20 +105,20 @@ add(int:1, int:2);  // 调用函数，输出 3
 * `string:self(second)` - 获取参数 second 的字符串值
 * `float:self(param)` - 获取参数 param 的浮点数值
 
-## 4. 内置库
+## 6. 内置库
 
 ### (1) basic 库
 
-* print()：打印文字或其他内容
-* runoscommand()：运行系统命令
-* setrequirepath()：设定 require 库的位置（不影响内置库）
-* input()：请求用户输入
-* pause()：让用户按下任意键继续
+* `print()`：打印文字或其他内容
+* `runoscommand()`：运行系统命令
+* `setrequirepath()`：设定 require 库的位置（不影响内置库）
+* `input()`：请求用户输入
+* `pause()`：让用户按下任意键继续
 
 ### (2) request 库
 
-* get()：抓取内容
-* download()：下载文件
-* check()：查看状态码
-* header()：查看头信息
-* footer()：查看尾信息
+* `get()`：抓取内容
+* `download()`：下载文件
+* `check()`：查看状态码
+* `header()`：查看头信息
+* `footer()`：查看尾信息
