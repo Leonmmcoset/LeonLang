@@ -4,110 +4,145 @@ name: Deploy
 on:
   push:
     tags:
-      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+"  # 仅在推送语义化版本标签时触发
 
 permissions:
-  contents: write
+  contents: write  # 授予创建 GitHub Release 的权限
 
 jobs:
   build-and-upload:
     name: Build and upload
     runs-on: ${{ matrix.os }}
-    # 增加故障排查日志保留（失败后保留30天日志）
-    env:
-      RUST_BACKTRACE: full  # 启用 Rust 回溯日志，方便定位代码错误
     strategy:
       matrix:
         include:
+          # Linux 平台配置（x86_64-unknown-linux-musl 静态编译）
           - build: linux
             os: ubuntu-latest
             target: x86_64-unknown-linux-musl
+            binary_suffix: ""  # Linux 二进制无后缀
+          # Windows 平台配置（x86_64-pc-windows-msvc）
           - build: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
-      # 保留原矩阵独立构建特性，避免一个平台失败影响另一个
-      fail-fast: false
+            binary_suffix: ".exe"  # Windows 二进制带 .exe 后缀
+      fail-fast: false  # 一个平台失败不影响另一个平台构建
+
+    env:
+      RUST_BACKTRACE: full  # 启用完整 Rust 错误回溯，便于排查编译问题
+      BINARY_NAME: "leonbasic"  # 二进制文件名（与 Cargo.toml 中 name 一致）
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4  # 升级到最新版，修复潜在兼容性问题
+      # 1. 拉取代码仓库
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # 拉取完整历史，避免依赖解析时缺失文件
 
-      - name: Get the release version from the tag
+      # 2. 从标签中提取版本号（如标签 v0.1.1 提取为 0.1.1）
+      - name: Extract release version from tag
         shell: bash
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: |
+          # 处理标签前缀（如 v0.1.1 → 0.1.1）
+          VERSION=$(echo "${GITHUB_REF#refs/tags/}" | sed 's/^v//')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "提取的版本号：$VERSION"
 
-      # 关键修复1：Windows 安装 VC Build Tools（解决链接器缺失问题）
+      # 3. Windows 平台：安装 Visual C++ Build Tools（解决 MSVC 链接器缺失问题）
       - name: Install Visual C++ Build Tools (Windows)
         if: matrix.os == 'windows-latest'
-        uses: ilammy/msvc-dev-cmd@v1  # 自动配置 VC 环境变量，确保 link.exe 可用
+        uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64  # 明确指定 64 位架构，匹配 x86_64 目标
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-          # 关键修复2：强制更新工具链，避免缓存损坏
-          toolchain: stable-x86_64-pc-windows-msvc  # Windows 明确指定工具链架构
-          components: rustfmt, clippy  # 可选：安装格式化和 lint 工具，辅助排查代码问题
-
-      # Linux 原有 musl 工具链安装步骤保留
+      # 4. Linux 平台：安装 musl 工具链（静态编译依赖）
       - name: Install musl tools (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
-      # 关键修复3：清理 cargo 缓存（避免旧缓存干扰）
-      - name: Clean cargo cache
+      # 5. 安装 Rust 工具链并添加目标平台
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}  # 自动安装矩阵中指定的目标平台
+          components: rustfmt, clippy  # 可选：安装代码格式化和 lint 工具
+
+      # 6. 清理 Cargo 缓存（避免旧缓存干扰，可选但建议保留）
+      - name: Clean Cargo cache
         run: cargo clean
 
-      # 关键修复4：增加依赖更新步骤（确保依赖版本兼容）
-      - name: Update cargo dependencies
-        run: cargo update
-
-      # 构建步骤保留 verbose，便于日志排查
-      - name: Build (native, no cross)
+      # 7. 编译项目（删除多余的 CARGO_TARGET_DIR，使用默认输出路径）
+      - name: Build project (native, no cross)
         uses: actions-rs/cargo@v1
+        id: cargo_build  # 步骤 ID，后续验证步骤可引用
         with:
           command: build
-          args: --verbose --release --target ${{ matrix.target }}
-        # 失败时输出更详细的环境信息
-        env:
-          # 输出工具链和目标信息，确认环境配置
-          CARGO_TARGET_DIR: target/${{ matrix.target }}
-          RUSTC_VERSION: ${{ steps.install-rust.outputs.rustc-version }}
+          args: --verbose --release --target ${{ matrix.target }}  #  Release 模式编译
 
-      # 打包步骤保留，适配 Windows 路径
-      - name: Build archive
+      # 8. 验证编译产物是否存在（关键步骤，避免进入无效归档）
+      - name: Verify build output exists
         shell: bash
         run: |
-          # 替换为你的 Cargo.toml 中的 name 字段值（必须与二进制文件名一致）
-          binary_name="leonbasic"
-          dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
-          mkdir -p "$dirname"  # 确保目录存在，避免 Windows 路径错误
+          # 构建完整的二进制文件路径（适配不同平台后缀）
+          BINARY_PATH="target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}${{ matrix.binary_suffix }}"
           
-          # Windows 路径处理：使用绝对路径避免相对路径问题
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname/" || { echo "Binary not found!"; ls -l target/${{ matrix.target }}/release/; exit 1; }
-          else
-            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname/" || { echo "Binary not found!"; ls -l target/${{ matrix.target }}/release/; exit 1; }
+          # 检查文件是否存在
+          if [ ! -f "$BINARY_PATH" ]; then
+            echo "ERROR: 编译产物不存在！预期路径：$BINARY_PATH"
+            echo "=== 搜索所有可能的产物位置 ==="
+            find target/ -name "${{ env.BINARY_NAME }}*"  # 搜索目标文件，定位实际路径
+            exit 1
           fi
+          
+          # 输出产物信息，确认正常生成
+          echo "✅ 编译产物验证通过！"
+          echo "产物路径：$BINARY_PATH"
+          echo "产物大小：$(du -sh "$BINARY_PATH" | awk '{print $1}')"
+          ls -la "$BINARY_PATH"
 
-          # 打包步骤：Windows 用 7z，Linux 用 tar.gz
+      # 9. 构建归档文件（打包二进制到压缩包，适配不同平台格式）
+      - name: Build archive package
+        shell: bash
+        run: |
+          # 定义归档文件名（格式：二进制名-版本-目标平台.压缩格式）
+          ARCHIVE_DIR_NAME="${{ env.BINARY_NAME }}-${{ env.VERSION }}-${{ matrix.target }}"
+          BINARY_PATH="target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}${{ matrix.binary_suffix }}"
+          
+          # 创建归档目录并移动二进制文件
+          mkdir -p "$ARCHIVE_DIR_NAME"
+          mv "$BINARY_PATH" "$ARCHIVE_DIR_NAME/" || {
+            echo "ERROR: 移动二进制文件失败！"
+            exit 1
+          }
+          
+          # 不同平台使用不同压缩格式（Windows 用 zip，Linux 用 tar.gz）
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            7z a -tzip "$dirname.zip" "$dirname"  # 明确指定 zip 格式，避免 7z 默认格式问题
-            echo "ASSET=$dirname.zip" >> $GITHUB_ENV
+            ARCHIVE_FILE="${ARCHIVE_DIR_NAME}.zip"
+            7z a -tzip -bb1 "$ARCHIVE_FILE" "$ARCHIVE_DIR_NAME/"  # 7z 打包 zip 格式，显示进度
           else
-            tar -czf "$dirname.tar.gz" "$dirname"
-            echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
+            ARCHIVE_FILE="${ARCHIVE_DIR_NAME}.tar.gz"
+            tar -czvf "$ARCHIVE_FILE" "$ARCHIVE_DIR_NAME/"  # tar 打包 gzip 格式，显示进度
           fi
+          
+          # 将归档文件名存入环境变量，后续发布步骤使用
+          echo "ASSET=$ARCHIVE_FILE" >> $GITHUB_ENV
+          echo "✅ 归档包创建成功！归档文件：$ARCHIVE_FILE"
+          ls -la "$ARCHIVE_FILE"
 
-      # 发布步骤保留，增加失败重试
-      - name: Release
-        uses: softprops/action-gh-release@v2  # 升级到最新版，修复 Windows 发布兼容性问题
+      # 10. 发布归档包到 GitHub Releases
+      - name: Upload archive to GitHub Releases
+        uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.ASSET }}
-          fail_on_unmatched_files: true  # 若资产文件不存在，明确报错
+          files: ${{ env.ASSET }}  # 上传之前构建的归档包
+          name: Release ${{ env.VERSION }}  # Release 标题
+          tag_name: ${{ github.ref_name }}  # 关联触发 workflow 的标签
+          body: |
+            ## Release ${{ env.VERSION }}
+            自动构建的 ${!! matrix.build !!} 平台产物，目标架构：${{ matrix.target }}
+            - 二进制文件：${{ env.BINARY_NAME }}${{ matrix.binary_suffix }}
+            - 归档格式：${{ matrix.os == 'windows-latest' ? 'ZIP' : 'TAR.GZ' }}
+          draft: false  # 不创建草稿，直接发布
+          prerelease: false  # 不标记为预发布（正式版本）
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub 自动提供的令牌，无需额外配置
