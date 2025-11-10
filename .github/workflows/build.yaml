@@ -48,19 +48,30 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "提取的版本号：$VERSION"
 
-      # 3. Windows 平台：安装 Visual C++ Build Tools（解决 MSVC 链接器缺失问题）
+      # 3. 提前生成归档格式变量（替代三元运算符，避免 YAML 语法错误）
+      - name: Set archive format variable
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            echo "ARCHIVE_FORMAT=ZIP" >> $GITHUB_ENV
+          else
+            echo "ARCHIVE_FORMAT=TAR.GZ" >> $GITHUB_ENV
+          fi
+          echo "归档格式：${{ env.ARCHIVE_FORMAT }}"
+
+      # 4. Windows 平台：安装 Visual C++ Build Tools（解决 MSVC 链接器缺失问题）
       - name: Install Visual C++ Build Tools (Windows)
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64  # 明确指定 64 位架构，匹配 x86_64 目标
 
-      # 4. Linux 平台：安装 musl 工具链（静态编译依赖）
+      # 5. Linux 平台：安装 musl 工具链（静态编译依赖）
       - name: Install musl tools (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
-      # 5. 安装 Rust 工具链并添加目标平台
+      # 6. 安装 Rust 工具链并添加目标平台
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -68,11 +79,11 @@ jobs:
           targets: ${{ matrix.target }}  # 自动安装矩阵中指定的目标平台
           components: rustfmt, clippy  # 可选：安装代码格式化和 lint 工具
 
-      # 6. 清理 Cargo 缓存（避免旧缓存干扰，可选但建议保留）
+      # 7. 清理 Cargo 缓存（避免旧缓存干扰，可选但建议保留）
       - name: Clean Cargo cache
         run: cargo clean
 
-      # 7. 编译项目（删除多余的 CARGO_TARGET_DIR，使用默认输出路径）
+      # 8. 编译项目（删除多余的 CARGO_TARGET_DIR，使用默认输出路径）
       - name: Build project (native, no cross)
         uses: actions-rs/cargo@v1
         id: cargo_build  # 步骤 ID，后续验证步骤可引用
@@ -80,7 +91,7 @@ jobs:
           command: build
           args: --verbose --release --target ${{ matrix.target }}  #  Release 模式编译
 
-      # 8. 验证编译产物是否存在（关键步骤，避免进入无效归档）
+      # 9. 验证编译产物是否存在（关键步骤，避免进入无效归档）
       - name: Verify build output exists
         shell: bash
         run: |
@@ -101,7 +112,7 @@ jobs:
           echo "产物大小：$(du -sh "$BINARY_PATH" | awk '{print $1}')"
           ls -la "$BINARY_PATH"
 
-      # 9. 构建归档文件（打包二进制到压缩包，适配不同平台格式）
+      # 10. 构建归档文件（打包二进制到压缩包，适配不同平台格式）
       - name: Build archive package
         shell: bash
         run: |
@@ -116,7 +127,7 @@ jobs:
             exit 1
           }
           
-          # 不同平台使用不同压缩格式（Windows 用 zip，Linux 用 tar.gz）
+          # 不同平台使用不同压缩格式（引用提前定义的变量）
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             ARCHIVE_FILE="${ARCHIVE_DIR_NAME}.zip"
             7z a -tzip -bb1 "$ARCHIVE_FILE" "$ARCHIVE_DIR_NAME/"  # 7z 打包 zip 格式，显示进度
@@ -130,7 +141,7 @@ jobs:
           echo "✅ 归档包创建成功！归档文件：$ARCHIVE_FILE"
           ls -la "$ARCHIVE_FILE"
 
-      # 10. 发布归档包到 GitHub Releases
+      # 11. 发布归档包到 GitHub Releases（使用提前定义的 ARCHIVE_FORMAT 变量）
       - name: Upload archive to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
@@ -139,9 +150,9 @@ jobs:
           tag_name: ${{ github.ref_name }}  # 关联触发 workflow 的标签
           body: |
             ## Release ${{ env.VERSION }}
-            自动构建的 ${!! matrix.build !!} 平台产物，目标架构：${{ matrix.target }}
+            自动构建的 ${{ matrix.build }} 平台产物，目标架构：${{ matrix.target }}
             - 二进制文件：${{ env.BINARY_NAME }}${{ matrix.binary_suffix }}
-            - 归档格式：${{ matrix.os == 'windows-latest' ? 'ZIP' : 'TAR.GZ' }}
+            - 归档格式：${{ env.ARCHIVE_FORMAT }}  # 引用提前生成的变量，避免三元运算符
           draft: false  # 不创建草稿，直接发布
           prerelease: false  # 不标记为预发布（正式版本）
         env:
