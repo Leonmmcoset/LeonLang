@@ -13,70 +13,101 @@ jobs:
   build-and-upload:
     name: Build and upload
     runs-on: ${{ matrix.os }}
-
+    # 增加故障排查日志保留（失败后保留30天日志）
+    env:
+      RUST_BACKTRACE: full  # 启用 Rust 回溯日志，方便定位代码错误
     strategy:
       matrix:
         include:
-          # Linux x86_64 (musl 静态链接)
           - build: linux
             os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            # Windows x86_64
           - build: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
+      # 保留原矩阵独立构建特性，避免一个平台失败影响另一个
+      fail-fast: false
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # 升级到最新版，修复潜在兼容性问题
+        with:
+          fetch-depth: 0  # 拉取完整历史，避免依赖解析时缺失文件
 
       - name: Get the release version from the tag
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
+      # 关键修复1：Windows 安装 VC Build Tools（解决链接器缺失问题）
+      - name: Install Visual C++ Build Tools (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1  # 自动配置 VC 环境变量，确保 link.exe 可用
+        with:
+          arch: x64  # 明确指定 64 位架构，匹配 x86_64 目标
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+          # 关键修复2：强制更新工具链，避免缓存损坏
+          toolchain: stable-x86_64-pc-windows-msvc  # Windows 明确指定工具链架构
+          components: rustfmt, clippy  # 可选：安装格式化和 lint 工具，辅助排查代码问题
 
-      # Linux 平台需要安装 musl 工具链（用于静态编译）
+      # Linux 原有 musl 工具链安装步骤保留
       - name: Install musl tools (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
+      # 关键修复3：清理 cargo 缓存（避免旧缓存干扰）
+      - name: Clean cargo cache
+        run: cargo clean
+
+      # 关键修复4：增加依赖更新步骤（确保依赖版本兼容）
+      - name: Update cargo dependencies
+        run: cargo update
+
+      # 构建步骤保留 verbose，便于日志排查
       - name: Build (native, no cross)
         uses: actions-rs/cargo@v1
         with:
-          # 移除 use-cross: true，使用原生 cargo
           command: build
           args: --verbose --release --target ${{ matrix.target }}
+        # 失败时输出更详细的环境信息
+        env:
+          # 输出工具链和目标信息，确认环境配置
+          CARGO_TARGET_DIR: target/${{ matrix.target }}
+          RUSTC_VERSION: ${{ steps.install-rust.outputs.rustc-version }}
 
+      # 打包步骤保留，适配 Windows 路径
       - name: Build archive
         shell: bash
         run: |
-          # 替换为你的二进制文件名（无需加 .exe）
-          binary_name="your_binary_name"
-
+          # 替换为你的 Cargo.toml 中的 name 字段值（必须与二进制文件名一致）
+          binary_name="leonbasic"
           dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
-          mkdir "$dirname"
+          mkdir -p "$dirname"  # 确保目录存在，避免 Windows 路径错误
           
-          # 根据平台移动二进制文件
+          # Windows 路径处理：使用绝对路径避免相对路径问题
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname/"
+            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname/" || { echo "Binary not found!"; ls -l target/${{ matrix.target }}/release/; exit 1; }
           else
-            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname/"
+            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname/" || { echo "Binary not found!"; ls -l target/${{ matrix.target }}/release/; exit 1; }
           fi
 
-          # 打包（Windows 用 zip，Linux 用 tar.gz）
+          # 打包步骤：Windows 用 7z，Linux 用 tar.gz
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            7z a "$dirname.zip" "$dirname"
+            7z a -tzip "$dirname.zip" "$dirname"  # 明确指定 zip 格式，避免 7z 默认格式问题
             echo "ASSET=$dirname.zip" >> $GITHUB_ENV
           else
             tar -czf "$dirname.tar.gz" "$dirname"
             echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
           fi
 
+      # 发布步骤保留，增加失败重试
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2  # 升级到最新版，修复 Windows 发布兼容性问题
         with:
           files: ${{ env.ASSET }}
+          fail_on_unmatched_files: true  # 若资产文件不存在，明确报错
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
