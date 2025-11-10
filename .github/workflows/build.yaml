@@ -21,28 +21,30 @@ jobs:
             os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             binary_suffix: ""  # Linux 二进制无后缀
-            openssl_dir: "/usr/local/musl"  # musl 版 OpenSSL 安装路径
+            openssl_dir: "/usr/local/musl-openssl"  # 源码编译的 OpenSSL 安装路径
+            openssl_version: "3.2.1"  # 选择稳定的 OpenSSL 版本（避免兼容性问题）
           # Windows 平台配置（x86_64-pc-windows-msvc）
           - build: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
             binary_suffix: ".exe"  # Windows 二进制带 .exe 后缀
-            openssl_dir: ""  # Windows 无需此配置，留空
+            openssl_dir: ""  # Windows 无需此配置
+            openssl_version: ""  # Windows 无需此配置
       fail-fast: false  # 一个平台失败不影响另一个平台构建
 
     env:
-      RUST_BACKTRACE: full  # 启用完整 Rust 错误回溯，便于排查编译问题
-      BINARY_NAME: "leonbasic"  # 二进制文件名（与 Cargo.toml 中 name 一致）
-      OPENSSL_DIR: ${{ matrix.openssl_dir }}  # 从矩阵读取 OpenSSL 路径（仅 Linux 生效）
+      RUST_BACKTRACE: full  # 启用完整 Rust 错误回溯
+      BINARY_NAME: "leonbasic"  # 二进制文件名（与 Cargo.toml 一致）
+      OPENSSL_DIR: ${{ matrix.openssl_dir }}  # OpenSSL 安装路径（仅 Linux 生效）
 
     steps:
-      # 1. 拉取代码仓库（含 Cargo.toml 和 Cargo.lock）
+      # 1. 拉取代码仓库
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 拉取完整历史，避免依赖解析时缺失文件
+          fetch-depth: 0
 
-      # 2. 从标签中提取版本号（如标签 v0.1.1 提取为 0.1.1）
+      # 2. 提取版本号（从标签中）
       - name: Extract release version from tag
         shell: bash
         run: |
@@ -50,7 +52,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "提取的版本号：$VERSION"
 
-      # 3. 提前生成归档格式变量（替代三元运算符，避免 YAML 语法错误）
+      # 3. 生成归档格式变量（避免三元运算符）
       - name: Set archive format variable
         shell: bash
         run: |
@@ -59,153 +61,150 @@ jobs:
           else
             echo "ARCHIVE_FORMAT=TAR.GZ" >> $GITHUB_ENV
           fi
-          echo "归档格式：${{ env.ARCHIVE_FORMAT }}"
 
-      # 4. Windows 平台：安装 Visual C++ Build Tools（解决 MSVC 链接器缺失问题）
+      # 4. Windows 平台：安装 Visual C++ Build Tools
       - name: Install Visual C++ Build Tools (Windows)
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: x64  # 明确指定 64 位架构，匹配 x86_64 目标
+          arch: x64
 
-      # 5. Linux 平台：安装 musl 工具链 + musl 版 OpenSSL（关键修复！）
-      - name: Install musl tools and OpenSSL (Linux)
+      # 5. Linux 平台：源码编译安装 musl 版 OpenSSL（关键修复！）
+      - name: Build and install OpenSSL for musl (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          # 1. 安装 Alpine 包管理器（apk），用于安装 musl 版本的依赖
-          sudo apt-get update && sudo apt-get install -y alpine-pkg-tools
+          # 5.1 安装编译依赖（基础工具 + musl 工具链）
+          sudo apt-get update && sudo apt-get install -y \
+            build-essential \
+            wget \
+            tar \
+            gzip \
+            musl-tools \
+            pkg-config  # 后续用于识别 OpenSSL 依赖
           
-          # 2. 创建 musl 根目录，用于存放 musl 依赖
-          sudo mkdir -p /usr/local/musl
-          sudo ln -s /usr/share/alpine/misc/proot-init /usr/local/musl/proot-init
+          # 5.2 下载 OpenSSL 源码（从官网获取稳定版本）
+          OPENSSL_URL="https://www.openssl.org/source/openssl-${{ matrix.openssl_version }}.tar.gz"
+          wget -O openssl.tar.gz "$OPENSSL_URL"
+          tar -xzf openssl.tar.gz
+          cd openssl-${{ matrix.openssl_version }}
           
-          # 3. 使用 apk 安装 musl 工具链和 musl 版 OpenSSL 开发库
-          sudo proot -R /usr/local/musl -0 apk add --no-cache \
-            musl-dev \
-            musl-openssl-dev \
-            pkgconfig  # 用于让 openssl-sys 识别依赖
+          # 5.3 配置编译参数（针对 musl 静态编译）
+          # - --prefix：指定安装路径
+          # - no-shared：仅生成静态库（适合 musl 静态编译）
+          # - -fPIC：生成位置无关代码（避免链接错误）
+          ./Configure \
+            --prefix="${{ matrix.openssl_dir }}" \
+            --openssldir="${{ matrix.openssl_dir }}" \
+            no-shared \
+            linux-x86_64 \
+            -fPIC \
+            -I/usr/include/musl \
+            -L/usr/lib/x86_64-linux-musl
           
-          # 4. 验证 OpenSSL 是否安装成功（检查头文件和静态库）
-          echo "=== 验证 musl OpenSSL 安装 ==="
-          if [ -f "${{ matrix.openssl_dir }}/include/openssl/ssl.h" ] && [ -f "${{ matrix.openssl_dir }}/lib/libssl.a" ]; then
-            echo "✅ musl OpenSSL 安装成功！"
-            ls -la "${{ matrix.openssl_dir }}/include/openssl/" | head -10  # 显示部分头文件
-            ls -la "${{ matrix.openssl_dir }}/lib/" | grep "libssl"  # 显示静态库
+          # 5.4 编译并安装（-j$(nproc) 启用多线程编译，加快速度）
+          make -j$(nproc)
+          sudo make install
+          
+          # 5.5 验证安装结果（检查头文件和静态库）
+          echo "=== 验证 OpenSSL 安装 ==="
+          if [ -f "${{ matrix.openssl_dir }}/include/openssl/ssl.h" ] && \
+             [ -f "${{ matrix.openssl_dir }}/lib/libssl.a" ] && \
+             [ -f "${{ matrix.openssl_dir }}/lib/libcrypto.a" ]; then
+            echo "✅ OpenSSL 源码编译安装成功！"
+            ls -la "${{ matrix.openssl_dir }}/include/openssl/" | head -5
+            ls -la "${{ matrix.openssl_dir }}/lib/" | grep -E "libssl|libcrypto"
           else
-            echo "ERROR: musl OpenSSL 安装失败！"
+            echo "ERROR: OpenSSL 安装失败！缺失关键文件"
             exit 1
           fi
 
-      # 6. 安装 Rust 工具链并添加目标平台
+      # 6. 安装 Rust 工具链
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          targets: ${{ matrix.target }}  # 自动安装矩阵中指定的目标平台
-          components: rustfmt, clippy  # 可选：安装代码格式化和 lint 工具
+          targets: ${{ matrix.target }}
+          components: rustfmt, clippy
 
-      # 7. 清理 Cargo 缓存和旧依赖（避免缓存干扰）
-      - name: Clean Cargo cache and old dependencies
+      # 7. 清理 Cargo 缓存
+      - name: Clean Cargo cache
         shell: bash
         run: |
-          # 清理项目编译缓存
           cargo clean
-          # 清理 Cargo 注册表缓存（避免拉取旧版本依赖）
           rm -rf ~/.cargo/registry/index/*
           rm -rf ~/.cargo/registry/cache/*
-          echo "✅ 已清理 Cargo 缓存"
 
-      # 8. 更新依赖并同步 Cargo.lock（解决版本冲突）
+      # 8. 更新依赖并验证
       - name: Update dependencies and sync Cargo.lock
         shell: bash
         run: |
-          # 尝试更新依赖，让 Cargo 重新解析版本并生成兼容的 Cargo.lock
           cargo update --verbose
-          # 验证依赖是否能正常解析（提前排查问题，避免编译时失败）
           if ! cargo check --target ${{ matrix.target }}; then
-            echo "ERROR: 依赖解析失败！查看 Cargo.toml 和 Cargo.lock 兼容性"
-            echo "=== 输出 Cargo.lock 中 openssl-sys 相关版本 ==="
-            grep -A 5 -B 5 "openssl-sys" Cargo.lock  # 定位 openssl-sys 版本配置
+            echo "ERROR: 依赖解析失败！"
+            grep -A 5 -B 5 "openssl-sys" Cargo.lock
             exit 1
           fi
-          echo "✅ 依赖更新并验证通过"
 
-      # 9. 编译项目（Linux 需指定 OPENSSL_DIR，Windows 无需）
+      # 9. 编译项目（Linux 需指定 OpenSSL 路径）
       - name: Build project (native, no cross)
         uses: actions-rs/cargo@v1
-        id: cargo_build  # 步骤 ID，后续验证步骤可引用
+        id: cargo_build
         with:
           command: build
-          args: --verbose --release --target ${{ matrix.target }}  #  Release 模式编译
+          args: --verbose --release --target ${{ matrix.target }}
         env:
-          # Linux 平台：明确告诉 openssl-sys 依赖的路径（从矩阵读取）
+          # Linux 平台：告诉 openssl-sys 依赖路径
           OPENSSL_DIR: ${{ matrix.openssl_dir }}
-          # Linux 平台：让 pkg-config 找到 musl 版 OpenSSL
+          # 让 pkg-config 找到 OpenSSL 配置文件
           PKG_CONFIG_PATH: ${{ matrix.openssl_dir }}/lib/pkgconfig
+          # 强制使用静态库链接（避免动态库依赖）
+          OPENSSL_STATIC: "1"
 
-      # 10. 验证编译产物是否存在（关键步骤，避免进入无效归档）
+      # 10. 验证编译产物
       - name: Verify build output exists
         shell: bash
         run: |
-          # 构建完整的二进制文件路径（适配不同平台后缀）
           BINARY_PATH="target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}${{ matrix.binary_suffix }}"
-          
-          # 检查文件是否存在
           if [ ! -f "$BINARY_PATH" ]; then
-            echo "ERROR: 编译产物不存在！预期路径：$BINARY_PATH"
-            echo "=== 搜索所有可能的产物位置 ==="
-            find target/ -name "${{ env.BINARY_NAME }}*"  # 搜索目标文件，定位实际路径
+            echo "ERROR: 产物不存在！路径：$BINARY_PATH"
+            find target/ -name "${{ env.BINARY_NAME }}*"
             exit 1
           fi
-          
-          # 输出产物信息，确认正常生成
-          echo "✅ 编译产物验证通过！"
-          echo "产物路径：$BINARY_PATH"
-          echo "产物大小：$(du -sh "$BINARY_PATH" | awk '{print $1}')"
+          echo "✅ 产物验证通过：$BINARY_PATH"
           ls -la "$BINARY_PATH"
 
-      # 11. 构建归档文件（打包二进制到压缩包，适配不同平台格式）
+      # 11. 构建归档包
       - name: Build archive package
         shell: bash
         run: |
-          # 定义归档文件名（格式：二进制名-版本-目标平台.压缩格式）
           ARCHIVE_DIR_NAME="${{ env.BINARY_NAME }}-${{ env.VERSION }}-${{ matrix.target }}"
           BINARY_PATH="target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}${{ matrix.binary_suffix }}"
-          
-          # 创建归档目录并移动二进制文件
           mkdir -p "$ARCHIVE_DIR_NAME"
-          mv "$BINARY_PATH" "$ARCHIVE_DIR_NAME/" || {
-            echo "ERROR: 移动二进制文件失败！"
-            exit 1
-          }
+          mv "$BINARY_PATH" "$ARCHIVE_DIR_NAME/" || exit 1
           
-          # 不同平台使用不同压缩格式（引用提前定义的变量）
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             ARCHIVE_FILE="${ARCHIVE_DIR_NAME}.zip"
-            7z a -tzip -bb1 "$ARCHIVE_FILE" "$ARCHIVE_DIR_NAME/"  # 7z 打包 zip 格式，显示进度
+            7z a -tzip -bb1 "$ARCHIVE_FILE" "$ARCHIVE_DIR_NAME/"
           else
             ARCHIVE_FILE="${ARCHIVE_DIR_NAME}.tar.gz"
-            tar -czvf "$ARCHIVE_FILE" "$ARCHIVE_DIR_NAME/"  # tar 打包 gzip 格式，显示进度
+            tar -czvf "$ARCHIVE_FILE" "$ARCHIVE_DIR_NAME/"
           fi
-          
-          # 将归档文件名存入环境变量，后续发布步骤使用
           echo "ASSET=$ARCHIVE_FILE" >> $GITHUB_ENV
-          echo "✅ 归档包创建成功！归档文件：$ARCHIVE_FILE"
-          ls -la "$ARCHIVE_FILE"
+          echo "✅ 归档包创建成功：$ARCHIVE_FILE"
 
-      # 12. 发布归档包到 GitHub Releases（使用提前定义的 ARCHIVE_FORMAT 变量）
+      # 12. 发布到 GitHub Releases
       - name: Upload archive to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.ASSET }}  # 上传之前构建的归档包
-          name: Release ${{ env.VERSION }}  # Release 标题
-          tag_name: ${{ github.ref_name }}  # 关联触发 workflow 的标签
+          files: ${{ env.ASSET }}
+          name: Release ${{ env.VERSION }}
+          tag_name: ${{ github.ref_name }}
           body: |
             ## Release ${{ env.VERSION }}
             自动构建的 ${{ matrix.build }} 平台产物，目标架构：${{ matrix.target }}
             - 二进制文件：${{ env.BINARY_NAME }}${{ matrix.binary_suffix }}
             - 归档格式：${{ env.ARCHIVE_FORMAT }}
-          draft: false  # 不创建草稿，直接发布
-          prerelease: false  # 不标记为预发布（正式版本）
+          draft: false
+          prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub 自动提供的令牌，无需额外配置
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
