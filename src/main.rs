@@ -1,7 +1,25 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, stdin, Write};
+ 
+// Print usage information using standard error output
+fn print_usage(program_name: &str) {
+    eprintln!("LeonBasic Interpreter v{}", version::VERSION);
+    eprintln!("Usage:");
+    eprintln!("  {} <file> [--debug]          # Execute LeonBasic script file", program_name);
+    eprintln!("  {} --shell                   # Start interactive shell", program_name);
+    eprintln!("  {} --version | --ver         # Display version information", program_name);
+}
 use std::path::Path;
+
+// ANSI color codes for terminal output
+const RESET: &str = "\x1b[0m";
+const RED: &str = "\x1b[31m";
+const GREEN: &str = "\x1b[32m";
+const YELLOW: &str = "\x1b[33m";
+const BLUE: &str = "\x1b[34m";
+const MAGENTA: &str = "\x1b[35m";
+const CYAN: &str = "\x1b[36m";
 
 // Import built-in library modules
 mod builtins;
@@ -174,7 +192,7 @@ impl Env {
         
         // Add debug information
         if self.debug_mode {
-            println!("DEBUG: Registering function {} with parameters: {:?}", func_name, args);
+            println!("{}DEBUG: Registering function {} with parameters: {:?}{}", BLUE, func_name, args, RESET);
         }
         
         // Save parameter name list
@@ -1188,13 +1206,12 @@ impl Env {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+    let program_name = &args[0];
     
     // Check version parameter
-    for arg in &args[1..] {
-        if arg == "--version" || arg == "--ver" {
-            println!("LeonBasic Interpreter v{}", version::VERSION);
-            return;
-        }
+    if args.len() > 1 && (args[1] == "--version" || args[1] == "--ver") {
+        println!("LeonBasic Interpreter v{}", version::VERSION);
+        return;
     }
     
     // Check if shell mode is enabled
@@ -1208,16 +1225,16 @@ fn main() {
     let mut file_path = None;
     
     // Parse arguments
-    for (i, arg) in args.iter().enumerate() {
-        if i == 0 {
-            // Skip program name
-            continue;
-        }
+    for arg in &args[1..] {
         if arg == "--debug" {
             debug_mode = true;
         } else if file_path.is_none() {
             // First non --debug argument is the file path
             file_path = Some(arg);
+        } else {
+            // Unexpected argument
+            print_usage(program_name);
+            return;
         }
     }
     
@@ -1225,10 +1242,7 @@ fn main() {
     let file_path = match file_path {
         Some(path) => path,
         None => {
-            println!("LeonBasic Interpreter v{}", version::VERSION);
-            println!("Usage: leonlang <file> [--debug]");
-            println!("Usage: leonlang --shell  # Start interactive shell");
-            println!("Usage: leonlang --version or --ver  # View version");
+            print_usage(program_name);
             return;
         }
     };
@@ -1249,39 +1263,39 @@ fn main() {
         Ok(mut file) => {
             let mut content = String::new();
             if let Err(e) = file.read_to_string(&mut content) {
-                eprintln!("Failed to read file: {}", e);
+                eprintln!("{}Failed to read file: {}{}", RED, e, RESET);
             } else if let Err(e) = env.parse_and_execute(&content) {
-                eprintln!("{}", e);
+                eprintln!("{}{}{}", RED, e, RESET);
             }
         },
-        Err(e) => eprintln!("Failed to open file: {}", e)
+        Err(e) => eprintln!("{}Failed to open file: {}{}", RED, e, RESET)
     }
 }
 
 // Start interactive shell
 fn start_shell() {
-    println!("LeonBasic Shell v0.1.0");
-    println!("Type 'exit' to quit the shell");
-    println!("Type 'help' to view help information");
+    println!("{}LeonBasic Shell v0.1.0{}", CYAN, RESET);
+    println!("Type {}'exit'{} to quit the shell", GREEN, RESET);
+    println!("Type {}'help'{} to view help information", GREEN, RESET);
     println!("---------------------");
     
     let mut env = Env::new(false); // Debug mode disabled by default in shell mode
     
     // Load basic and time libraries by default
     if let Err(e) = env.handle_require("require(\"basic\")") {
-        println!("Warning: Failed to load basic library: {}", e);
+        println!("{}Warning: Failed to load basic library: {}{}", YELLOW, e, RESET);
     }
     if let Err(e) = env.handle_require("require(\"time\")") {
-        println!("Warning: Failed to load time library: {}", e);
+        println!("{}Warning: Failed to load time library: {}{}", YELLOW, e, RESET);
     }
     
     loop {
-        print!("leon> ");
+        print!("{}leon>{} ", CYAN, RESET);
         std::io::Write::flush(&mut std::io::stdout()).unwrap();
         
         let mut input = String::new();
         if let Err(e) = stdin().read_line(&mut input) {
-            println!("Failed to read input: {}", e);
+            println!("{}Failed to read input: {}{}", RED, e, RESET);
             continue;
         }
         
@@ -1289,17 +1303,17 @@ fn start_shell() {
         
         // Handle special commands
         if line == "exit" || line == "quit" || line == "q" {
-            println!("Goodbye!");
+            println!("{}Goodbye!{}", GREEN, RESET);
             break;
         } else if line == "help" || line == "h" {
-            println!("Available commands:");
-            println!("  exit/quit/q  - Exit the shell");
-            println!("  help/h       - Show this help message");
-            println!("  clear        - Clear the screen");
-            println!("Basic syntax examples:");
-            println!("  var(a) = string:\"Hello\";  # Define variable");
-            println!("  basic.print(var(a));        # Print variable");
-            println!("  require(\"basic\");          # Load library");
+            println!("{}Available commands:{}", GREEN, RESET);
+            println!("  {}exit/quit/q  {}- Exit the shell", CYAN, RESET);
+            println!("  {}help/h       {}- Show this help message", CYAN, RESET);
+            println!("  {}clear        {}- Clear the screen", CYAN, RESET);
+            println!("{}Basic syntax examples:{}", GREEN, RESET);
+            println!("  {}{}{}  # Define variable", MAGENTA, "var(a) = string:\"Hello\";  ", RESET);
+            println!("  {}{}{}  # Print variable", MAGENTA, "basic.print(var(a));        ", RESET);
+            println!("  {}{}{}  # Load library", MAGENTA, "require(\"basic\");          ", RESET);
             continue;
         } else if line == "clear" {
             #[cfg(target_os = "windows")]
@@ -1312,7 +1326,7 @@ fn start_shell() {
         // Execute LeonBasic code
         if !line.is_empty() && !line.starts_with("//") {
             if let Err(e) = env.execute_line(line) {
-                println!("Error: {}", e);
+                println!("{}Error: {}{}", RED, e, RESET);
             }
         }
     }
