@@ -1,0 +1,45 @@
+require("basic");
+require("color");
+
+basic.print(string:"Testing color library...");
+basic.print(string:"\n");
+
+// 测试各种颜色输出
+color.print(string:"red", string:"This is red text");
+color.print(string:"green", string:"This is green text");
+color.print(string:"blue", string:"This is blue text");
+color.print(string:"yellow", string:"This is yellow text");
+color.print(string:"magenta", string:"This is magenta text");
+color.print(string:"cyan", string:"This is cyan text");
+color.print(string:"white", string:"This is white text");
+color.print(string:"black", string:"This is black text");
+basic.print(string:"\n");
+
+// 测试亮色变体
+color.print(string:"bright_red", string:"This is bright red text");
+color.print(string:"bright_green", string:"This is bright green text");
+color.print(string:"bright_blue", string:"This is bright blue text");
+color.print(string:"bright_yellow", string:"This is bright yellow text");
+color.print(string:"bright_magenta", string:"This is bright magenta text");
+color.print(string:"bright_cyan", string:"This is bright cyan text");
+color.print(string:"bright_white", string:"This is bright white text");
+color.print(string:"gray", string:"This is gray text");
+basic.print(string:"\n");
+
+// 测试获取带颜色的字符串
+basic.print(string:"Using get_color_string:");
+var(red_str) = color.get_color_string(string:"red", string:"Red string");
+var(green_str) = color.get_color_string(string:"green", string:"Green string");
+basic.print(var(red_str) + string:" and " + var(green_str));
+basic.print(string:"\n");
+
+// 测试带背景色的输出
+basic.print(string:"Testing background colors:");
+color.print_bg(string:"white", string:"red", string:"White text on red background");
+color.print_bg(string:"black", string:"green", string:"Black text on green background");
+color.print_bg(string:"yellow", string:"blue", string:"Yellow text on blue background");
+basic.print(string:"\n");
+
+// 列出所有可用的颜色
+basic.print(string:"List of available colors:");
+color.list_colors();

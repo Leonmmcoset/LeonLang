@@ -1,16 +1,79 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, stdin, Write};
+use std::path::Path;
+use std::env;
+use std::process::Command;
+use std::os::windows::process::CommandExt; // 用于Windows特定的命令扩展
+
+// Import build module for bytecode support
+mod build;
  
 // Print usage information using standard error output
 fn print_usage(program_name: &str) {
     eprintln!("LeonBasic Interpreter v{}", version::VERSION);
     eprintln!("Usage:");
-    eprintln!("  {} <file> [--debug]          # Execute LeonBasic script file", program_name);
+    eprintln!("  {} <file> [--debug]          # Execute LeonBasic script or bytecode file", program_name);
+    eprintln!("  {} --build <file>            # Compile LeonBasic file to bytecode (.lb)", program_name);
     eprintln!("  {} --shell                   # Start interactive shell", program_name);
+    eprintln!("  {} --setpath                 # Add LeonBasic to system PATH", program_name);
     eprintln!("  {} --version | --ver         # Display version information", program_name);
 }
-use std::path::Path;
+
+/// 将LeonBasic添加到系统PATH环境变量
+fn add_to_path() -> Result<(), String> {
+    // 获取当前可执行文件的路径
+    let exe_path = env::current_exe()
+        .map_err(|e| format!("Failed to get executable path: {}", e))?;
+    
+    // 获取可执行文件所在的目录
+    let exe_dir = match exe_path.parent() {
+        Some(dir) => dir,
+        None => return Err("Failed to get executable directory".to_string())
+    };
+    
+    let exe_dir_str = exe_dir.to_string_lossy();
+    
+    // 在Windows上，我们需要使用PowerShell以管理员权限运行命令来修改PATH
+    #[cfg(target_os = "windows")]
+    {
+        println!("Adding {} to system PATH...", exe_dir_str);
+        println!("This operation requires administrator privileges.");
+        
+        // 创建一个PowerShell命令，以管理员权限运行
+        let powershell_cmd = format!(
+            "[Environment]::SetEnvironmentVariable('PATH', \"$env:PATH;{}\", 'Machine')",
+            exe_dir_str.replace('\\', "\\\\")
+        );
+        
+        // 使用PowerShell以管理员权限运行命令
+        let mut cmd = Command::new("powershell.exe");
+        cmd.arg("-Command")
+           .arg(&powershell_cmd)
+           .creation_flags(0x00000008); // CREATE_NO_WINDOW
+        
+        let output = cmd.output()
+            .map_err(|e| format!("Failed to run PowerShell command: {}", e))?;
+        
+        if output.status.success() {
+            println!("Successfully added to system PATH.");
+            println!("Please restart your terminal or command prompt to apply the changes.");
+            Ok(())
+        } else {
+            let error_msg = String::from_utf8_lossy(&output.stderr);
+            Err(format!("Failed to add to PATH. Error: {}. Please run as administrator.", error_msg))
+        }
+    }
+    
+    // 对于其他操作系统，提供一般性指导
+    #[cfg(not(target_os = "windows"))]
+    {
+        println!("To add LeonBasic to PATH, add the following line to your shell configuration file:");
+        println!("export PATH=\"{}:$PATH\"".replace('\\', '/'), exe_dir_str);
+        println!("Then restart your terminal.");
+        Ok(())
+    }
+}
 
 // ANSI color codes for terminal output
 const RESET: &str = "\x1b[0m";
@@ -603,7 +666,12 @@ impl Env {
             }
         } else if value_str.starts_with("string:") {
             let content_part = value_str.trim_start_matches("string:");
-            let content = content_part.trim_matches('"');
+            // 正确处理字符串字面量，只移除最外层的引号
+            let content = if content_part.starts_with('"') && content_part.ends_with('"') {
+                &content_part[1..content_part.len()-1]
+            } else {
+                content_part
+            };
             return Ok(Value::String(content.to_string()));
         }
         
@@ -851,16 +919,46 @@ impl Env {
                     }
                 } else {
                     // Process parameters for other functions, supporting self() format
-                    let parts: Vec<&str> = args_str.split(',').map(|s| s.trim()).collect();
+                    // Better parameter parsing that handles commas inside strings
                     let mut args_vec = Vec::new();
+                    let mut current_arg = String::new();
+                    let mut in_string = false;
+                    let mut escape_next = false;
                     
-                    for part in parts {
-                        // Clean up parameters, remove semicolons and comments
-                        let clean_part = part.split(';').next().unwrap_or("").trim();
-                        
-                        // Check if it's in self() format
+                    for c in args_str.chars() {
+                        if escape_next {
+                            current_arg.push(c);
+                            escape_next = false;
+                        } else if c == '\\' {
+                            escape_next = true;
+                            current_arg.push(c);
+                        } else if c == '"' {
+                            in_string = !in_string;
+                            current_arg.push(c);
+                        } else if c == ',' && !in_string {
+                            // End of current argument
+                            let clean_part = current_arg.split(';').next().unwrap_or("").trim();
+                            if !clean_part.is_empty() {
+                                // Check if it's in self() format
+                                let value = if clean_part.starts_with("self(") && clean_part.ends_with(")") {
+                                    // Extract parameter content from self()
+                                    let inner_content = clean_part.trim_start_matches("self(").trim_end_matches(")");
+                                    self.parse_value(inner_content)?
+                                } else {
+                                    self.parse_value(clean_part)?
+                                };
+                                args_vec.push(value);
+                            }
+                            current_arg.clear();
+                        } else {
+                            current_arg.push(c);
+                        }
+                    }
+                    
+                    // Add the last argument
+                    let clean_part = current_arg.split(';').next().unwrap_or("").trim();
+                    if !clean_part.is_empty() {
                         let value = if clean_part.starts_with("self(") && clean_part.ends_with(")") {
-                            // Extract parameter content from self()
                             let inner_content = clean_part.trim_start_matches("self(").trim_end_matches(")");
                             self.parse_value(inner_content)?
                         } else {
@@ -922,7 +1020,11 @@ impl Env {
             }
             
             // Normal string literal, supporting escape characters
-            let content = content_part.trim_matches('"');
+            let content = if content_part.starts_with('"') && content_part.ends_with('"') {
+                &content_part[1..content_part.len()-1]
+            } else {
+                content_part
+            };
             // Handle escape characters
             let mut result = String::new();
             let mut chars = content.chars().peekable();
@@ -1148,7 +1250,16 @@ impl Env {
             }
             
             // Normal string literal, supporting escape characters
-            let trimmed = content_part.trim_matches('"');
+            println!("DEBUG: Original content_part: {:?}", content_part);
+            let trimmed = if content_part.starts_with('"') && content_part.ends_with('"') {
+                println!("DEBUG: Trimming quotes, content_part length: {}", content_part.len());
+                let trimmed_str = &content_part[1..content_part.len()-1];
+                println!("DEBUG: After trimming: {:?}", trimmed_str);
+                trimmed_str
+            } else {
+                println!("DEBUG: Not trimming, using as-is");
+                content_part
+            };
             let mut result = String::new();
             let mut chars = trimmed.chars().peekable();
             
@@ -1220,6 +1331,33 @@ fn main() {
         return;
     }
     
+    // Check if build mode is enabled
+    if args.len() == 3 && args[1] == "--build" {
+        let source_path = &args[2];
+        // Generate output path with .lb extension
+        let output_path = if source_path.ends_with(".leon") {
+            source_path.replace(".leon", ".lb")
+        } else {
+            format!("{}.lb", source_path)
+        };
+        
+        println!("Compiling {} to {}", source_path, output_path);
+        
+        match build::compile_to_bytecode(source_path, &output_path) {
+            Ok(_) => println!("Compilation successful!"),
+            Err(e) => eprintln!("{}Compilation failed: {}{}", RED, e, RESET)
+        }
+        return;
+    }
+    
+    // Check if setpath mode is enabled
+    if args.len() == 2 && args[1] == "--setpath" {
+        if let Err(e) = add_to_path() {
+            eprintln!("{}Failed to add to PATH: {}{}", RED, e, RESET);
+        }
+        return;
+    }
+    
     // Normal file execution mode
     let mut debug_mode = false;
     let mut file_path = None;
@@ -1258,18 +1396,34 @@ fn main() {
     builtins::register_basic_functions(&mut env);
     builtins::register_request_functions(&mut env);
     builtins::register_time_functions(&mut env);
+    builtins::register_color_functions(&mut env);
     
-    match File::open(file_path) {
-        Ok(mut file) => {
-            let mut content = String::new();
-            if let Err(e) = file.read_to_string(&mut content) {
-                eprintln!("{}Failed to read file: {}{}", RED, e, RESET);
-            } else if let Err(e) = env.parse_and_execute(&content) {
-                eprintln!("{}{}{}", RED, e, RESET);
-            }
-        },
-        Err(e) => eprintln!("{}Failed to open file: {}{}", RED, e, RESET)
+    // Check if the file is a bytecode file
+    if build::is_bytecode_file(file_path) {
+        println!("Executing bytecode file: {}", file_path);
+        match build::read_from_bytecode(file_path) {
+            Ok(content) => {
+                if let Err(e) = env.parse_and_execute(&content) {
+                    eprintln!("{}{}{}", RED, e, RESET);
+                }
+            },
+            Err(e) => eprintln!("{}Failed to execute bytecode file: {}{}", RED, e, RESET)
+        }
+    } else {
+        // Regular .leon file execution
+        match File::open(file_path) {
+            Ok(mut file) => {
+                let mut content = String::new();
+                if let Err(e) = file.read_to_string(&mut content) {
+                    eprintln!("{}Failed to read file: {}{}", RED, e, RESET);
+                } else if let Err(e) = env.parse_and_execute(&content) {
+                    eprintln!("{}{}{}", RED, e, RESET);
+                }
+            },
+            Err(e) => eprintln!("{}Failed to open file: {}{}", RED, e, RESET)
+        }
     }
+
 }
 
 // Start interactive shell
