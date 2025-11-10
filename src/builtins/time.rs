@@ -16,14 +16,14 @@ pub fn register_time_functions(env: &mut Env) {
         let format = if let Some(Value::String(f)) = args.get(0) {
             f.clone()
         } else {
-            "%Y-%m-%d %H:%M:%S".to_string() // 默认格式
+            "%Y-%m-%d %H:%M:%S".to_string() // Default format
         };
         
         let now = SystemTime::now();
         let duration = now.duration_since(UNIX_EPOCH).map_err(|e| e.to_string())?;
         let timestamp_sec = duration.as_secs();
         
-        // 简化的时间格式化（实际项目中可以使用chrono库获得更强大的格式化功能）
+        // Simplified time formatting (in a real project, chrono library can be used for more powerful formatting)
         let formatted = format_time_with_pattern(timestamp_sec, &format)?;
         Ok(Value::String(formatted))
     }));
@@ -33,7 +33,7 @@ pub fn register_time_functions(env: &mut Env) {
         if let (Some(Value::Int(timestamp)), Some(Value::String(format))) = 
             (args.get(0), args.get(1)) {
             
-            // 处理毫秒时间戳，转换为秒
+            // Process millisecond timestamp, convert to seconds
             let timestamp_sec = (*timestamp as u64) / 1000;
             let formatted = format_time_with_pattern(timestamp_sec, format)?;
             Ok(Value::String(formatted))

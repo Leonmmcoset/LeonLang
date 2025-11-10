@@ -3,26 +3,26 @@ use std::fs::File;
 use std::io::{Read, stdin, Write};
 use std::path::Path;
 
-// 导入内置库模块
+// Import built-in library modules
 mod builtins;
-// 导入版本信息
+// Import version information
 mod version;
 
-// 定义值的类型
+// Define value types
 #[derive(Debug)]
 enum Value {
     String(String),
     Int(i64),
     Float(f64),
-    // 添加File类型用于文件操作
+    // Add File type for file operations
     #[allow(dead_code)]
     File(File),
-    // Null 变体暂时未使用，保留以便将来扩展
+    // Null variant is not used temporarily, retained for future extension
     #[allow(dead_code)]
     Null,
 }
 
-// 手动实现Clone trait
+// Manually implement Clone trait
 impl Clone for Value {
     fn clone(&self) -> Self {
         match self {
@@ -30,15 +30,15 @@ impl Clone for Value {
             Value::Int(i) => Value::Int(*i),
             Value::Float(f) => Value::Float(*f),
             Value::Null => Value::Null,
-            Value::File(_) => panic!("不能克隆文件句柄"), // 或者返回一个错误
+            Value::File(_) => panic!("Cannot clone file handle"), // Or return an error
         }
     }
 }
 
-// 函数类型别名
+// Function type alias
 type Function = Box<dyn Fn(Vec<Value>) -> Result<Value, String>>;
 
-// 定义执行环境
+// Define execution environment
 struct Env {
     variables: HashMap<String, Value>,
     loaded_packages: HashMap<String, bool>,
@@ -55,7 +55,7 @@ impl Env {
             debug_mode,
         };
         
-        // 函数注册现在在main函数中进行
+        // Function registration is now done in main function
         
         env
     }
@@ -71,26 +71,26 @@ impl Env {
                 continue;
             }
             
-            // 特殊处理if语句
+            // Special handling for if statements
             if trimmed.starts_with("if(") {
-                // 特殊处理多行if语句
+                // Special handling for multi-line if statements
                 let (result, new_index) = self.execute_if_statement(&lines[i..])?;
                 if let Err(e) = result {
-                    return Err(format!("执行错误: {}", e));
+                    return Err(format!("Execution error: {}", e));
                 }
                 i += new_index;
             } 
-            // 特殊处理函数定义
+            // Special handling for function definitions
             else if trimmed.starts_with("func(") && trimmed.contains(" = {") {
-                // 在parse_and_execute中直接处理函数定义，这样可以访问i和lines变量
+                // Handle function definitions directly in parse_and_execute to access i and lines variables
                 if let Err(e) = self.parse_function_definition(&lines, &mut i) {
-                    return Err(format!("函数定义错误: {}", e));
+                    return Err(format!("Function definition error: {}", e));
                 }
             }
             else {
-                // 处理单行语句
+                // Process single-line statements
                 if let Err(e) = self.execute_line(trimmed) {
-                    return Err(format!("执行错误: {}", e));
+                    return Err(format!("Execution error: {}", e));
                 }
                 i += 1;
             }
@@ -100,104 +100,104 @@ impl Env {
     }
     
     fn execute_line(&mut self, line: &str) -> Result<(), String> {
-        // 去除行末的分号和空格
+        // Remove trailing semicolons and spaces
         let line = line.trim_end_matches(';').trim();
         
-        // 跳过空行和注释
+        // Skip empty lines and comments
         if line.is_empty() || line.starts_with("//") {
             return Ok(());
         }
         
-        // 特殊处理if语句（在单个execute_line调用中处理）
+        // Special handling for if statements (processed in a single execute_line call)
         if line.starts_with("if(") {
-            // 将单行转换为数组以便调用execute_if_statement
+            // Convert single line to array for execute_if_statement call
             let lines = [line];
             let (result, _) = self.execute_if_statement(&lines)?;
             return result;
         }
         
-        // 检查是否是 require 语句
+        // Check if it's a require statement
         if line.starts_with("require(") {
             return self.handle_require(line);
         }
         
-        // 检查是否是变量定义
+        // Check if it's a variable definition
         if line.starts_with("var(") && line.contains(" = ") {
             return self.handle_variable_definition(line);
         }
         
-        // 检查是否是函数调用 - 支持点表示法和简化调用方式
+        // Check if it's a function call - support dot notation and simplified call methods
         if (line.contains(".") && line.contains("(") && line.contains(")")) || 
            (line.contains("(") && line.contains(")") && !line.starts_with("func(") && !line.starts_with("var(") && !line.starts_with("if(")) {
             return self.handle_function_call(line);
         }
         
-        // 函数定义现在在parse_and_execute中处理，这里不再需要处理
+        // Function definitions are now handled in parse_and_execute, no need to handle here
         
         Ok(())
     }
     
-    // 解析函数定义
+    // Parse function definition
     fn parse_function_definition(&mut self, lines: &[&str], i: &mut usize) -> Result<(), String> {
         let line = lines[*i];
         
-        // 解析函数定义
+        // Parse function definition
         let func_def = line.trim_start_matches("func(").trim_end_matches(" = {");
         
-        // 解析函数名和参数
-        let func_name_end = func_def.find('(').ok_or("函数定义格式错误")?;
+        // Parse function name and parameters
+        let func_name_end = func_def.find('(').ok_or("Function definition format error")?;
         let func_name = &func_def[..func_name_end];
         
-        // 解析参数部分
+        // Parse parameters part
         let args_part = &func_def[func_name_end + 1..];
-        // 找到参数部分的右括号位置
-        let args_end = args_part.find(')').ok_or("函数定义缺少右括号")?;
+        // Find closing parenthesis position in parameters part
+        let args_end = args_part.find(')').ok_or("Function definition missing closing parenthesis")?;
         let args_content = &args_part[..args_end];
         
-        // 处理参数
+        // Process parameters
         let mut args = Vec::new();
         if !args_content.trim().is_empty() {
-            // 简单的参数解析
+            // Simple parameter parsing
             let parts: Vec<&str> = args_content.split(',').map(|s| s.trim()).collect();
             for part in parts {
                 if part.starts_with("self(") && part.ends_with(")") {
-                    // 提取 self() 中的参数名
+                    // Extract parameter name from self()
                     let arg_name = part.trim_start_matches("self(").trim_end_matches(")");
                     args.push(arg_name.to_string());
                 } else {
-                    // 确保参数名不包含右括号
+                    // Ensure parameter name doesn't contain closing parenthesis
                     let clean_arg = part.trim_end_matches(')');
                     args.push(clean_arg.to_string());
                 }
             }
         }
         
-        // 添加调试信息
+        // Add debug information
         if self.debug_mode {
-            println!("DEBUG: 注册函数 {}，参数: {:?}", func_name, args);
+            println!("DEBUG: Registering function {} with parameters: {:?}", func_name, args);
         }
         
-        // 保存参数名列表
+        // Save parameter name list
         let args_clone = args.clone();
         let func_name_clone = func_name.to_string();
-        let debug_mode_clone = self.debug_mode; // 复制debug_mode到闭包中
+        let debug_mode_clone = self.debug_mode; // Copy debug_mode to closure
         
-        // 提取函数体 - 从当前行开始查找直到找到匹配的结束括号
+        // Extract function body - find from current line until matching closing brace
         let mut func_body_lines = Vec::new();
-        let mut bracket_count = 1; // 已经找到了开始的{
+        let mut bracket_count = 1; // Found opening brace {
         let mut j = *i + 1;
         
         while j < lines.len() && bracket_count > 0 {
             let trimmed_line = lines[j].trim();
             
-            // 计算括号数量
+            // Count brackets
             for c in trimmed_line.chars() {
                 if c == '{' {
                     bracket_count += 1;
                 } else if c == '}' {
                     bracket_count -= 1;
                     if bracket_count == 0 {
-                        // 找到结束括号，不包含这一行
+                        // Found closing bracket, not including this line
                         break;
                     }
                 }
@@ -209,18 +209,18 @@ impl Env {
             j += 1;
         }
         
-        // 更新索引以跳过函数体
-        *i = j; // j已经指向函数体结束后的下一行
+        // Update index to skip function body
+        *i = j; // j already points to line after function body end
         
-        // 针对我们的测试用例，实现通用的函数处理逻辑
-        // 支持带模块前缀的函数名（如utils.add、utils.multiply、utils.greet）
+        // Implement general function handling logic for our test cases
+        // Support function names with module prefixes (like utils.add, utils.multiply, utils.greet)
         
-        // 根据函数名和参数实现相应的功能
+        // Implement corresponding functionality based on function name and parameters
         if func_name.ends_with(".add") && args.len() == 2 {
-            // 处理加法函数
+            // Handle addition function
             self.functions.insert(func_name.to_string(), Box::new(move |call_args| {
                 if call_args.len() >= 2 {
-                    // 返回两个参数的和
+                    // Return sum of two parameters
                     match (&call_args[0], &call_args[1]) {
                         (Value::Int(a), Value::Int(b)) => {
                             Ok(Value::Int(a + b))
@@ -243,10 +243,10 @@ impl Env {
                 }
             }));
         } else if func_name.ends_with(".multiply") && args.len() == 2 {
-            // 处理乘法函数
+            // Handle multiplication function
             self.functions.insert(func_name.to_string(), Box::new(move |call_args| {
                 if call_args.len() >= 2 {
-                    // 返回两个参数的乘积
+                    // Return product of two parameters
                     match (&call_args[0], &call_args[1]) {
                         (Value::Int(a), Value::Int(b)) => {
                             Ok(Value::Int(a * b))
@@ -269,17 +269,17 @@ impl Env {
                 }
             }));
         } else if func_name.ends_with(".greet") && args.len() == 1 {
-            // 处理greet函数（字符串拼接）
+            // Handle greet function (string concatenation)
             self.functions.insert(func_name.to_string(), Box::new(move |call_args| {
                 if let Some(Value::String(name)) = call_args.first() {
-                    // 返回"Hello, {name}!"
+                    // Return "Hello, {name}!"
                     Ok(Value::String(format!("Hello, {}!", name)))
                 } else {
                     Ok(Value::String("Hello!".to_string()))
                 }
             }));
         } else {
-            // 对于其他函数，使用默认实现
+            // Use default implementation for other functions
             self.functions.insert(func_name.to_string(), Box::new(move |_| {
                 Ok(Value::Null)
             }));
@@ -288,31 +288,31 @@ impl Env {
         Ok(())
     }
     
-    // 处理if条件语句
+    // Handle if condition statements
     fn handle_if_condition(&mut self, _line: &str) -> Result<(), String> {
-        // 这个方法现在只是为了保持接口兼容，实际功能在execute_if_statement中实现
+        // This method is now just for interface compatibility, actual functionality is implemented in execute_if_statement
         Ok(())
     }
     
-    // 执行if语句（包含多行代码块）
+    // Execute if statement (includes multi-line code blocks)
     fn execute_if_statement(&mut self, lines: &[&str]) -> Result<(Result<(), String>, usize), String> {
         let first_line = lines[0].trim();
         if self.debug_mode {
-            println!("DEBUG: 执行if语句: {}", first_line);
+            println!("DEBUG: Executing if statement: {}", first_line);
         }
         
-        // 提取条件部分
-        let cond_start = first_line.find('(').ok_or("if语句格式错误")? + 1;
-        let cond_end = first_line.find(')').ok_or("if语句格式错误")?;
+        // Extract condition part
+        let cond_start = first_line.find('(').ok_or("If statement format error")? + 1;
+        let cond_end = first_line.find(')').ok_or("If statement format error")?;
         let condition_str = &first_line[cond_start..cond_end];
         
-        // 评估条件
+        // Evaluate condition
         let condition_result = self.evaluate_condition(condition_str)?;
         if self.debug_mode {
-            println!("DEBUG: 条件结果: {}", condition_result);
+            println!("DEBUG: Condition result: {}", condition_result);
         }
         
-        // 重新实现一个更干净、更简单的版本
+        // Reimplement a cleaner, simpler version
         let mut if_body = Vec::new();
         let mut else_body = Vec::new();
         let mut in_if = true;
@@ -321,37 +321,37 @@ impl Env {
         let mut total_lines_to_skip = 0;
         let mut found_else = false;
         
-        // 处理第一行的大括号
+        // Process opening brace on first line
         if first_line.contains('{') {
             brace_count += 1;
         }
         
-        // 从if语句的下一行开始处理
+        // Start processing from next line after if statement
         let mut i = 1;
         
         while i < lines.len() {
             let line = lines[i];
             let trimmed = line.trim();
             
-            // 检查是否是压缩格式的 else 行
+            // Check if it's a compressed else line
             if (trimmed.starts_with("}") && trimmed.ends_with("{")) && 
                (trimmed.contains(" else ") || trimmed.contains("\nelse")) {
-                // 这是if块的结束和else块的开始
+                // This is the end of if block and start of else block
                 in_if = false;
                 in_else = true;
                 found_else = true;
-                brace_count = 1; // 重置为else块的左大括号
+                brace_count = 1; // Reset for else block opening brace
                 i += 1;
                 continue;
             }
             
-            // 检查是否是普通 else 行
+            // Check if it's a regular else line
             if (trimmed == "else {" || trimmed == "else") && brace_count == 1 {
-                // 这是if块的结束和else块的开始
+                // This is the end of if block and start of else block
                 in_if = false;
                 in_else = true;
                 found_else = true;
-                // 重置大括号计数
+                // Reset brace count
                 brace_count = if trimmed.contains('{') {
                     1
                 } else {
@@ -361,7 +361,7 @@ impl Env {
                 continue;
             }
             
-            // 计算大括号
+            // Count braces
             for c in trimmed.chars() {
                 if c == '{' {
                     brace_count += 1;
@@ -370,14 +370,14 @@ impl Env {
                 }
             }
             
-            // 收集有效的代码行
+            // Collect valid code lines
             if in_if && !trimmed.is_empty() && trimmed != "{" && trimmed != "}" && !trimmed.starts_with("//") {
                 if_body.push(trimmed);
             } else if in_else && !trimmed.is_empty() && trimmed != "{" && trimmed != "}" && !trimmed.starts_with("//") {
                 else_body.push(trimmed);
             }
             
-            // 检查是否到达整个结构的结束
+            // Check if reaching the end of the entire structure
             if brace_count == 0 && (in_if || in_else) {
                 total_lines_to_skip = i + 1;
                 break;
@@ -386,34 +386,34 @@ impl Env {
             i += 1;
         }
         
-        // 确保至少跳过一行
+        // Ensure at least one line is skipped
         if total_lines_to_skip == 0 {
             total_lines_to_skip = i;
         }
         
         if self.debug_mode {
-            println!("DEBUG: if-else结构跳过行数: {}, if块行数: {}, else块行数: {}, 是否找到else: {}", 
+            println!("DEBUG: if-else structure skipped lines: {}, if block lines: {}, else block lines: {}, found else: {}", 
                     total_lines_to_skip, if_body.len(), else_body.len(), found_else);
         }
         
-        // 执行对应的代码块
+        // Execute the corresponding code block
         if condition_result {
             if self.debug_mode {
-                println!("DEBUG: 条件为true，执行if块代码");
+                println!("DEBUG: Condition is true, executing if block code");
             }
             for code_line in &if_body {
                 if self.debug_mode {
-                    println!("DEBUG: 执行if代码行: {}", code_line);
+                    println!("DEBUG: Executing if code line: {}", code_line);
                 }
                 self.execute_line(code_line)?;
             }
         } else if found_else {
             if self.debug_mode {
-                println!("DEBUG: 条件为false，执行else块代码");
+                println!("DEBUG: Condition is false, executing else block code");
             }
             for code_line in &else_body {
                 if self.debug_mode {
-                    println!("DEBUG: 执行else代码行: {}", code_line);
+                    println!("DEBUG: Executing else code line: {}", code_line);
                 }
                 self.execute_line(code_line)?;
             }
@@ -422,24 +422,24 @@ impl Env {
         return Ok((Ok(()), total_lines_to_skip));
     }
     
-    // 评估条件表达式
+    // Evaluate condition expression
     fn evaluate_condition(&mut self, condition: &str) -> Result<bool, String> {
         let condition = condition.trim();
         if self.debug_mode {
-            println!("DEBUG: 正在评估条件: {}", condition);
+            println!("DEBUG: Evaluating condition: {}", condition);
         }
         
-        // 检查 > 比较
+        // Check > comparison
         if let Some(pos) = condition.find('>') {
             let left = &condition[..pos].trim();
             let right = &condition[pos+1..].trim();
             
-            // 获取左右两边的值
+            // Get left and right values
             let left_val = self.get_value_or_constant(left)?;
             let right_val = self.get_value_or_constant(right)?;
             
             if self.debug_mode {
-                println!("DEBUG: 左侧值类型: {:?}, 右侧值类型: {:?}", 
+                println!("DEBUG: Left value type: {:?}, Right value type: {:?}", 
                          match &left_val {
                              Value::String(_) => "String",
                              Value::Int(_) => "Int",
@@ -453,30 +453,30 @@ impl Env {
                              _ => "Other",
                          });
                 
-                // 打印具体值
+                // Print specific values
                 match (&left_val, &right_val) {
-                    (Value::Int(l), Value::Int(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
-                    (Value::Int(l), Value::Float(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
-                    (Value::Float(l), Value::Int(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
-                    (Value::Float(l), Value::Float(r)) => println!("DEBUG: 左侧值: {}, 右侧值: {}", l, r),
+                    (Value::Int(l), Value::Int(r)) => println!("DEBUG: Left value: {}, Right value: {}", l, r),
+                    (Value::Int(l), Value::Float(r)) => println!("DEBUG: Left value: {}, Right value: {}", l, r),
+                    (Value::Float(l), Value::Int(r)) => println!("DEBUG: Left value: {}, Right value: {}", l, r),
+                    (Value::Float(l), Value::Float(r)) => println!("DEBUG: Left value: {}, Right value: {}", l, r),
                     _ => (),
                 }
             }
             
-            // 比较
+            // Compare
             let result = match (left_val, right_val) {
                 (Value::Int(left_num), Value::Int(right_num)) => left_num > right_num,
                 (Value::Int(left_num), Value::Float(right_num)) => (left_num as f64) > right_num,
                 (Value::Float(left_num), Value::Int(right_num)) => left_num > (right_num as f64),
                 (Value::Float(left_num), Value::Float(right_num)) => left_num > right_num,
-                _ => return Err("比较操作只能用于数字类型".to_string()),
+                _ => return Err("Comparison operations can only be used with numeric types".to_string()),
             };
             if self.debug_mode {
-                println!("DEBUG: 比较结果: {}", result);
+                println!("DEBUG: Comparison result: {}", result);
             }
             Ok(result)
         }
-        // 检查 < 比较
+        // Check < comparison
         else if let Some(pos) = condition.find('<') {
             let left = &condition[..pos].trim();
             let right = &condition[pos+1..].trim();
@@ -489,10 +489,10 @@ impl Env {
                 (Value::Int(left_num), Value::Float(right_num)) => Ok((left_num as f64) < right_num),
                 (Value::Float(left_num), Value::Int(right_num)) => Ok(left_num < (right_num as f64)),
                 (Value::Float(left_num), Value::Float(right_num)) => Ok(left_num < right_num),
-                _ => Err("比较操作只能用于数字类型".to_string()),
+                _ => Err("Comparison operations can only be used with numeric types".to_string()),
             }
         }
-        // 检查 == 比较
+        // Check == comparison
         else if let Some(pos) = condition.find("==") {
             let left = &condition[..pos].trim();
             let right = &condition[pos+2..].trim();
@@ -509,7 +509,7 @@ impl Env {
                 _ => Ok(false),
             }
         }
-        // 检查 != 比较
+        // Check != comparison
         else if let Some(pos) = condition.find("!=") {
             let left = &condition[..pos].trim();
             let right = &condition[pos+2..].trim();
@@ -527,13 +527,13 @@ impl Env {
             }
         }
         else {
-            Err("不支持的条件操作符".to_string())
+            Err("Unsupported condition operator".to_string())
         }
     }
     
-    // 获取值或常量，支持变量引用
+    // Get value or constant, supporting variable references
     fn get_value_or_constant(&mut self, value_str: &str) -> Result<Value, String> {
-        // 如果是变量引用（如 "var(a)"）
+        // If it's a variable reference (like "var(a)")
         if value_str.starts_with("var(") && value_str.ends_with(")") {
             let var_name = &value_str[4..value_str.len()-1];
             if let Some(val) = self.variables.get(var_name) {
@@ -542,14 +542,14 @@ impl Env {
                     Value::Int(i) => Value::Int(*i),
                     Value::Float(f) => Value::Float(*f),
                     Value::Null => Value::Null,
-                    _ => return Err("不支持的变量类型用于条件比较".to_string()),
+                    _ => return Err("Unsupported variable type for condition comparison".to_string()),
                 });
             } else {
-                return Err(format!("未定义的变量: {}", var_name));
+                return Err(format!("Undefined variable: {}", var_name));
             }
         }
         
-        // 如果是直接引用变量名（如 "a"）
+        // If it's a direct variable name reference (like "a")
         if !value_str.contains(":") && !value_str.contains(".") && !value_str.contains("(") {
             if let Some(val) = self.variables.get(value_str) {
                 return Ok(match val {
@@ -557,22 +557,22 @@ impl Env {
                     Value::Int(i) => Value::Int(*i),
                     Value::Float(f) => Value::Float(*f),
                     Value::Null => Value::Null,
-                    _ => return Err("不支持的变量类型用于条件比较".to_string()),
+                    _ => return Err("Unsupported variable type for condition comparison".to_string()),
                 });
             }
         }
         
-        // 尝试解析为整数常量
+        // Try to parse as integer constant
         if let Ok(num) = value_str.parse::<i64>() {
             return Ok(Value::Int(num));
         }
         
-        // 尝试解析为浮点数常量
+        // Try to parse as float constant
         if let Ok(num) = value_str.parse::<f64>() {
             return Ok(Value::Float(num));
         }
         
-        // 否则尝试解析为其他值
+        // Otherwise try to parse as other value
         if value_str.starts_with("int:") {
             let num_str = value_str.trim_start_matches("int:");
             if let Ok(num) = num_str.parse::<i64>() {
@@ -589,67 +589,67 @@ impl Env {
             return Ok(Value::String(content.to_string()));
         }
         
-        Err(format!("无法解析值: {}", value_str))
+        Err(format!("Cannot parse value: {}", value_str))
     }
     
     fn handle_require(&mut self, line: &str) -> Result<(), String> {
-        // 去除末尾的分号
+        // Remove trailing semicolon
         let line_without_semicolon = line.trim_end_matches(';');
         
-        // 简单解析 require 语句
-        let start = line_without_semicolon.find('"').ok_or("require语句格式错误")? + 1;
-        let end = line_without_semicolon.rfind('"').ok_or("require语句格式错误")?;
+        // Simple parsing of require statement
+        let start = line_without_semicolon.find('"').ok_or("Require statement format error")? + 1;
+        let end = line_without_semicolon.rfind('"').ok_or("Require statement format error")?;
         let lib_name = &line_without_semicolon[start..end];
         
-        // 标记包已加载
+        // Mark package as loaded
         self.loaded_packages.insert(lib_name.to_string(), true);
         
-        // 检查是否是内置库
+        // Check if it's a built-in library
         match lib_name {
             "request" => {
-                // 注册request模块的基本函数
-                // HTTP GET 请求函数
+                // Register basic functions for request module
+                // HTTP GET request function
                 self.functions.insert("request.get".to_string(), Box::new(|args| {
                     if args.is_empty() {
-                        return Err("request.get需要URL参数".to_string());
+                        return Err("request.get requires URL parameter".to_string());
                     }
                     
-                    // 简化实现，直接返回模拟数据
-                    Ok(Value::String("从URL获取的内容".to_string()))
+                    // Simplified implementation, directly return mock data
+                    Ok(Value::String("Content retrieved from URL".to_string()))
                 }));
                 
-                // 下载文件函数
+                // File download function
                 self.functions.insert("request.download".to_string(), Box::new(|args| {
                     if args.len() < 2 {
-                        return Err("request.download需要URL和本地文件名两个参数".to_string());
+                        return Err("request.download requires URL and local filename parameters".to_string());
                     }
                     
-                    Ok(Value::String("下载成功".to_string()))
+                    Ok(Value::String("Download successful".to_string()))
                 }));
                 
-                // 状态码检查函数
+                // Status code check function
                 self.functions.insert("request.check".to_string(), Box::new(|args| {
                     if args.is_empty() {
-                        return Err("request.check需要URL参数".to_string());
+                        return Err("request.check requires URL parameter".to_string());
                     }
                     
-                    // 直接返回状态码，避免任何可能的错误
+                    // Directly return status code to avoid any possible errors
                     Ok(Value::String("200".to_string()))
                 }));
                 
-                // 头信息函数
+                // Header information function
                 self.functions.insert("request.header".to_string(), Box::new(|args| {
                     if args.is_empty() {
-                        return Err("request.header需要URL参数".to_string());
+                        return Err("request.header requires URL parameter".to_string());
                     }
                     
                     Ok(Value::String("HTTP/1.1 200 OK\nContent-Type: text/html".to_string()))
                 }));
                 
-                // 尾信息函数
+                // Footer information function
                 self.functions.insert("request.footer".to_string(), Box::new(|args| {
                     if args.is_empty() {
-                        return Err("request.footer需要URL参数".to_string());
+                        return Err("request.footer requires URL parameter".to_string());
                     }
                     
                     Ok(Value::String("Footer information".to_string()))
@@ -657,54 +657,54 @@ impl Env {
             }
             
             "basic" => {
-                // basic模块函数已经在启动时注册
+                // Basic module functions are already registered at startup
             }
             
             _ => {
-                // 尝试加载外部文件模块
-                // 首先尝试直接路径和test目录路径
+                // Try to load external file module
+                // First try direct path and test directory path
                 let file_paths = [
                     format!("{}.leon", lib_name),
                     format!("lib/{}.leon", lib_name),
                     format!("{}/index.leon", lib_name),
-                    format!("test/{}.leon", lib_name),  // 添加test目录路径
+                    format!("test/{}.leon", lib_name),  // Add test directory path
                 ];
                 
                 let mut found = false;
                 for path in &file_paths {
                     if std::path::Path::new(path).exists() {
                         if self.debug_mode {
-                            println!("DEBUG: 找到并正在加载外部模块: {}", path);
+                            println!("DEBUG: Found and loading external module: {}", path);
                         }
                         
-                        // 读取文件内容
+                        // Read file content
                         match std::fs::read_to_string(path) {
                             Ok(content) => {
                                 if self.debug_mode {
-                                    println!("DEBUG: 成功读取文件内容，长度: {} 字符", content.len());
+                                    println!("DEBUG: Successfully read file content, length: {} characters", content.len());
                                 }
-                                // 执行加载的代码，这样就能注册其中定义的函数
+                                // Execute the loaded code to register its defined functions
                                 if let Err(e) = self.parse_and_execute(&content) {
-                                    println!("DEBUG: 执行外部模块时发生错误: {}", e);
+                                    println!("DEBUG: Error executing external module: {}", e);
                                 } else {
                                     found = true;
                                     if self.debug_mode {
-                                        println!("DEBUG: 成功执行外部模块代码");
+                                        println!("DEBUG: Successfully executed external module code");
                                     }
                                     break;
                                 }
                             }
                             Err(e) => {
-                                println!("DEBUG: 读取外部模块失败: {}, 错误: {}", path, e);
+                                println!("DEBUG: Failed to read external module: {}, error: {}", path, e);
                             }
                         }
                     } else if self.debug_mode {
-                        println!("DEBUG: 模块文件不存在: {}", path);
+                        println!("DEBUG: Module file does not exist: {}", path);
                     }
                 }
                 
                 if !found && self.debug_mode {
-                    println!("DEBUG: 未找到模块: {}", lib_name);
+                    println!("DEBUG: Module not found: {}", lib_name);
                 }
             }
         }
@@ -717,7 +717,7 @@ impl Env {
     fn handle_variable_definition(&mut self, line: &str) -> Result<(), String> {
         let parts: Vec<&str> = line.split(" = ").collect();
         if parts.len() != 2 {
-            return Err("变量定义格式错误".to_string());
+            return Err("Variable definition format error".to_string());
         }
         
         let var_name_part = parts[0];
@@ -725,12 +725,12 @@ impl Env {
         
         let value_part = parts[1].trim_end_matches(';');
         
-        // 检查是否是函数调用
+        // Check if it's a function call
         let value = if value_part.contains(".") && value_part.contains("(") && value_part.contains(")") {
-            // 调用函数并获取返回值
+            // Call function and get return value
             self.execute_function_call(value_part)?
         } else {
-            // 解析普通值
+            // Parse normal value
             self.parse_value(value_part)?
         };
         
@@ -739,19 +739,19 @@ impl Env {
     }
     
     fn handle_function_call(&mut self, function_call: &str) -> Result<(), String> {
-        // 移除分号
+        // Remove semicolon
         let func_call = function_call.trim_end_matches(';');
         
-        // 检查是否是自定义函数调用（以func(开头）
+        // Check if it's a custom function call (starts with func()
         if func_call.starts_with("func(") {
-            // 对于自定义函数调用，提取函数名和参数
+            // For custom function calls, extract function name and parameters
             let call_content = func_call.trim_start_matches("func(").trim_end_matches(")");
             
             if let Some(func_name_end) = call_content.find('(') {
                 let func_name = &call_content[..func_name_end];
                 let args_str = &call_content[func_name_end + 1..call_content.len() - 1];
                 
-                // 解析参数
+                // Parse parameters
                 let mut args = Vec::new();
                 if !args_str.trim().is_empty() {
                     let arg_parts: Vec<&str> = args_str.split(',').map(|s| s.trim()).collect();
@@ -761,31 +761,31 @@ impl Env {
                     }
                 }
                 
-                // 调用函数
+                // Call function
                 if let Some(function) = self.functions.get(func_name) {
                     let _ = function(args)?;
                 } else {
-                    return Err(format!("函数未定义: {}", func_name));
+                    return Err(format!("Function undefined: {}", func_name));
                 }
             }
             
             return Ok(());
         }
         
-        // 其他类型的函数调用，使用原有逻辑
+        // For other types of function calls, use original logic
         let _ = self.execute_function_call(func_call)?;
         
         Ok(())
     }
     
     fn execute_function_call(&mut self, function_call: &str) -> Result<Value, String> {
-        // 解析函数名和参数 - 使用字符索引处理多字节字符
-        let func_name_end_char = function_call.chars().position(|c| c == '(').ok_or("函数调用格式错误")?;
-        // 将字符索引转换为字节索引
+        // Parse function name and parameters - Use character indices for multi-byte characters
+        let func_name_end_char = function_call.chars().position(|c| c == '(').ok_or("Function call format error")?;
+        // Convert character index to byte index
         let func_name_end = function_call.chars().take(func_name_end_char).collect::<String>().len();
         let func_name = &function_call[..func_name_end];
         
-        // 找到匹配的右括号 - 使用字符迭代
+        // Find matching closing parenthesis - Using character iteration
         let mut bracket_count = 1;
         let mut args_end_char = func_name_end_char + 1;
         let chars: Vec<char> = function_call.chars().collect();
@@ -802,47 +802,47 @@ impl Env {
             args_end_char += 1;
         }
         if bracket_count != 0 {
-            return Err("函数调用格式错误：括号不匹配".to_string());
+            return Err("Function call format error: parentheses not matching".to_string());
         }
-        // 将字符索引转换为字节索引
+        // Convert character index to byte index
         let args_end = function_call.chars().take(args_end_char).collect::<String>().len();
         
-        // 检查是否是简化的函数调用（不带有func()前缀）
+        // Check if it's a simplified function call (without func() prefix)
         let actual_func_name = if !func_name.contains('.') && !func_name.starts_with("basic.") && !func_name.starts_with("request.") {
-            // 直接使用函数名，不添加前缀
+            // Use function name directly without prefix
             func_name
         } else {
             func_name
         };
         
-        // 检查函数是否存在
+        // Check if function exists
         if let Some(func) = self.functions.get(actual_func_name) {
-            // 解析参数
+            // Parse arguments
             let args_str = &function_call[func_name_end + 1..args_end];
             let args = if !args_str.trim().is_empty() {
-                // 特殊处理basic.input函数
+                // Special handling for basic.input function
                 if actual_func_name == "basic.input" {
-                    // 提取引号内的内容
+                    // Extract content inside quotes
                     if args_str.contains('"') {
-                        let start = args_str.find('"').ok_or("参数格式错误")? + 1;
-                        let end = args_str.rfind('"').ok_or("参数格式错误")?;
+                        let start = args_str.find('"').ok_or("Parameter format error")? + 1;
+                        let end = args_str.rfind('"').ok_or("Parameter format error")?;
                         let content = &args_str[start..end];
                         vec![Value::String(content.to_string())]
                     } else {
                         vec![Value::String(args_str.trim().to_string())]
                     }
                 } else {
-                    // 处理其他函数的参数，支持self()格式
+                    // Process parameters for other functions, supporting self() format
                     let parts: Vec<&str> = args_str.split(',').map(|s| s.trim()).collect();
                     let mut args_vec = Vec::new();
                     
                     for part in parts {
-                        // 清理参数，去除分号和注释
+                        // Clean up parameters, remove semicolons and comments
                         let clean_part = part.split(';').next().unwrap_or("").trim();
                         
-                        // 检查是否是self()格式
+                        // Check if it's in self() format
                         let value = if clean_part.starts_with("self(") && clean_part.ends_with(")") {
-                            // 提取self()中的参数内容
+                            // Extract parameter content from self()
                             let inner_content = clean_part.trim_start_matches("self(").trim_end_matches(")");
                             self.parse_value(inner_content)?
                         } else {
@@ -856,20 +856,20 @@ impl Env {
                 Vec::new()
             };
             
-            // 调用函数
+            // Call function
             func(args)
         } else {
-            Err(format!("未定义的函数: {}", actual_func_name))
+            Err(format!("Undefined function: {}", actual_func_name))
         }
     }
     
     fn parse_value(&self, value_str: &str) -> Result<Value, String> {
-        // 先检查是否包含字符串拼接表达式
+        // First check if it contains string concatenation expression
         if value_str.contains(" + ") {
             return self.evaluate_expression(value_str);
         }
         
-        // 处理变量引用
+        // Process variable reference
         if value_str.starts_with("var(") {
             let var_name = value_str.trim_start_matches("var(").trim_end_matches(")");
             if let Some(val) = self.variables.get(var_name) {
@@ -878,22 +878,22 @@ impl Env {
                     Value::Int(i) => Ok(Value::Int(*i)),
                     Value::Float(f) => Ok(Value::Float(*f)),
                     Value::Null => Ok(Value::Null),
-                    Value::File(_) => Err("不能直接引用文件句柄".to_string()),
+                    Value::File(_) => Err("Cannot directly reference file handle".to_string()),
                 };
             } else {
-                return Err(format!("未定义的变量: {}", var_name));
+                return Err(format!("Undefined variable: {}", var_name));
             }
         }
         
-        // 处理字符串
+        // Process string
         if value_str.starts_with("string:") {
             let content_part = value_str.trim_start_matches("string:");
             
-            // 检查是否是 string:var(变量名) 形式
+            // Check if it's in string:var(variable_name) format
             if content_part.starts_with("var(") {
-                // 递归调用 parse_value_without_expression 来获取变量的值
+                // Recursively call parse_value_without_expression to get variable value
                 let var_value = self.parse_value_without_expression(content_part)?;
-                // 将获取到的值转换为字符串
+                // Convert the obtained value to string
                 return match var_value {
                     Value::String(s) => Ok(Value::String(s.clone())),
                     Value::Int(i) => Ok(Value::String(i.to_string())),
@@ -903,39 +903,39 @@ impl Env {
                 };
             }
             
-            // 普通字符串字面量，支持转义字符
+            // Normal string literal, supporting escape characters
             let content = content_part.trim_matches('"');
-            // 处理转义字符
+            // Handle escape characters
             let mut result = String::new();
             let mut chars = content.chars().peekable();
             
             while let Some(c) = chars.next() {
                 if c == '\\' {
                     if let Some(next_char) = chars.next() {
-                        // 处理转义字符
+                        // Handle escape characters
                         match next_char {
-                            'n' => result.push('\n'),  // 换行符
-                            't' => result.push('\t'),  // 制表符
-                            'r' => result.push('\r'),  // 回车符
-                            '"' => result.push('"'),   // 双引号
-                            '\\' => result.push('\\'), // 反斜杠
+                            'n' => result.push('\n'),  // Newline
+                            't' => result.push('\t'),  // Tab
+                            'r' => result.push('\r'),  // Carriage return
+                            '"' => result.push('"'),   // Double quote
+                            '\\' => result.push('\\'), // Backslash
                             _ => {
-                                // 特殊处理\+只显示为+
+                                // Special handling for \\+ to display as +
                                 if next_char == '+' {
                                     result.push('+');
                                 } else {
-                                    // 其他转义序列保持原样
+                                    // Keep other escape sequences as is
                                     result.push('\\');
                                     result.push(next_char);
                                 }
                             }
                         }
                     } else {
-                        // 单个反斜杠在末尾，直接添加
+                        // Single backslash at the end, add directly
                         result.push('\\');
                     }
                 } else {
-                    // 普通字符直接添加
+                    // Normal characters added directly
                     result.push(c);
                 }
             }
@@ -943,7 +943,7 @@ impl Env {
             return Ok(Value::String(result));
         }
         
-        // 处理整数
+        // Process integer
         if value_str.starts_with("int:") {
             let num_str = value_str.trim_start_matches("int:");
             if let Ok(num) = num_str.parse::<i64>() {
@@ -951,7 +951,7 @@ impl Env {
             }
         }
         
-        // 处理浮点数
+        // Process float
         if value_str.starts_with("float:") {
             let num_str = value_str.trim_start_matches("float:");
             if let Ok(num) = num_str.parse::<f64>() {
@@ -959,20 +959,20 @@ impl Env {
             }
         }
         
-        // 默认作为字符串处理
+        // Default to string processing
         Ok(Value::String(value_str.to_string()))
     }
     
     fn evaluate_expression(&self, expr: &str) -> Result<Value, String> {
-        // 处理字符串拼接表达式
+        // Process string concatenation expression
         let parts: Vec<&str> = expr.split(" + ").collect();
         let mut result = String::new();
         
         for part in parts {
-            // 递归解析每个部分的值
+            // Recursively parse each part's value
             let value = self.parse_value_without_expression(part.trim())?;
             
-            // 将所有值转换为字符串并拼接
+            // Convert all values to strings and concatenate
                 match value {
                     Value::String(s) => result.push_str(&s),
                     Value::Int(i) => result.push_str(&i.to_string()),
@@ -985,32 +985,32 @@ impl Env {
         Ok(Value::String(result))
     }
     
-    // 评估带参数映射的表达式
+    // Evaluate expression with parameter mapping
       fn evaluate_expression_with_params(&self, expression: &str, param_map: &std::collections::HashMap<String, Value>) -> Result<Value, String> {
-          // 去除表达式两端的空白字符
+          // Remove whitespace from both ends of the expression
           let expression = expression.trim();
           
-          // 处理类型转换表达式
+          // Process type conversion expression
           if expression.contains(':') {
               let parts: Vec<&str> = expression.split(':').collect();
               if parts.len() == 2 {
                   let type_part = parts[0].trim();
                   let value_part = parts[1].trim();
                   
-                  // 先尝试解析值部分，支持self()参数引用
+                  // First try to parse value part, support self() parameter reference
                    let value = if value_part.starts_with("self(") && value_part.ends_with(")") {
                        let param_name = value_part[5..value_part.len()-1].trim();
                        if let Some(param_value) = param_map.get(param_name) {
                            param_value.clone()
                        } else {
-                           return Err(format!("参数 {} 未定义", param_name));
+                           return Err(format!("Parameter {} undefined", param_name));
                        }
                    } else {
-                       // 尝试作为普通值解析
+                       // Try to parse as normal value
                        self.parse_value_without_expression(value_part)?
                    };
                   
-                  // 然后进行类型转换
+                  // Then perform type conversion
                   match type_part {
                       "int" => match value {
                           Value::Int(val) => Ok(Value::Int(val)),
@@ -1019,10 +1019,10 @@ impl Env {
                               if let Ok(int_val) = val.parse::<i64>() {
                                   Ok(Value::Int(int_val))
                               } else {
-                                  Err(format!("无法将字符串 '{}' 转换为整数", val))
+                                  Err(format!("Failed to convert string '{}' to integer", val))
                               }
                           },
-                          _ => Err(format!("无法将 {:?} 转换为整数", value)),
+                          _ => Err(format!("Failed to convert {:?} to integer", value)),
                       },
                       "float" => match value {
                           Value::Int(val) => Ok(Value::Float(val as f64)),
@@ -1031,67 +1031,67 @@ impl Env {
                               if let Ok(float_val) = val.parse::<f64>() {
                                   Ok(Value::Float(float_val))
                               } else {
-                                  Err(format!("无法将字符串 '{}' 转换为浮点数", val))
+                                  Err(format!("Failed to convert string '{}' to float", val))
                               }
                           },
-                          _ => Err(format!("无法将 {:?} 转换为浮点数", value)),
+                          _ => Err(format!("Failed to convert {:?} to float", value)),
                       },
                       "string" => match value {
                           Value::Int(val) => Ok(Value::String(val.to_string())),
                           Value::Float(val) => Ok(Value::String(val.to_string())),
                           Value::String(val) => Ok(Value::String(val)),
-                          _ => Err(format!("无法将 {:?} 转换为字符串", value)),
+                          _ => Err(format!("Failed to convert {:?} to string", value)),
                       },
-                      _ => Err(format!("不支持的类型转换: {}", type_part)),
+                      _ => Err(format!("Unsupported type conversion: {}", type_part)),
                   }
               } else {
-                  Err(format!("无效的类型转换表达式: {}", expression))
+                  Err(format!("Invalid type conversion expression: {}", expression))
               }
           } else {
-              // 处理字面值
+              // Process literals
               if expression.starts_with('"') && expression.ends_with('"') {
-                  // 字符串类型
+                  // String type
                   let content = expression[1..expression.len()-1].to_string();
                   return Ok(Value::String(content));
               } else if expression == "null" || expression == "Null" {
-                  // Null类型
+                  // Null type
                   return Ok(Value::Null);
               } else if let Ok(int_val) = expression.parse::<i64>() {
-                  // 整数类型
+                  // Integer type
                   return Ok(Value::Int(int_val));
               } else if let Ok(float_val) = expression.parse::<f64>() {
-                  // 浮点数类型
+                  // Float type
                   return Ok(Value::Float(float_val));
               }
               
-              // 处理变量引用
+              // Process variable reference
               if expression.starts_with("var(") && expression.ends_with(")") {
                   let var_name = expression[4..expression.len()-1].trim();
                   if let Some(value) = self.variables.get(var_name) {
                       return Ok(value.clone());
                   } else {
-                      return Err(format!("变量 {} 未定义", var_name));
+                      return Err(format!("Variable {} undefined", var_name));
                   }
               }
               
-              // 处理self()参数引用
+              // Process self() parameter reference
               if expression.starts_with("self(") && expression.ends_with(")") {
                   let param_name = expression[5..expression.len()-1].trim();
                   if let Some(value) = param_map.get(param_name) {
                       return Ok(value.clone());
                   } else {
-                      return Err(format!("参数 {} 未定义", param_name));
+                      return Err(format!("Parameter {} undefined", param_name));
                   }
               }
               
-              // 如果表达式不匹配任何已知模式，则返回错误
-              Err(format!("无法识别的表达式: {}", expression))
+              // Return error if expression doesn't match any known pattern
+              Err(format!("Unrecognized expression: {}", expression))
           }
       }
     
-    // 不带表达式解析的版本，避免递归
+    // Version without expression parsing to avoid recursion
     fn parse_value_without_expression(&self, value_str: &str) -> Result<Value, String> {
-        // 处理变量引用
+        // Process variable reference
         if value_str.starts_with("var(") {
             let var_name = value_str.trim_start_matches("var(").trim_end_matches(")");
             if let Some(val) = self.variables.get(var_name) {
@@ -1100,23 +1100,23 @@ impl Env {
                     Value::Int(i) => Ok(Value::Int(*i)),
                     Value::Float(f) => Ok(Value::Float(*f)),
                     Value::Null => Ok(Value::Null),
-                    Value::File(_) => Err("不能直接引用文件句柄".to_string()),
+                    Value::File(_) => Err("Cannot directly reference file handle".to_string()),
                 };
             } else {
-                return Err(format!("未定义的变量: {}", var_name));
+                return Err(format!("Undefined variable: {}", var_name));
             }
         }
         
-        // 处理字符串
+        // Process string
         if value_str.starts_with("string:") {
             let content_part = value_str.trim_start_matches("string:");
             
-            // 检查是否是 string:var(变量名) 形式
+            // Check if it's in string:var(variable_name) format
             if content_part.starts_with("var(") {
-                // 获取变量名
+                // Get variable name
                 let var_name = content_part.trim_start_matches("var(").trim_end_matches(")");
                 if let Some(val) = self.variables.get(var_name) {
-                    // 将变量的值转换为字符串
+                    // Convert variable value to string
                     return match val {
                         Value::String(s) => Ok(Value::String(s.clone())),
                         Value::Int(i) => Ok(Value::String(i.to_string())),
@@ -1125,11 +1125,11 @@ impl Env {
                         Value::File(_) => Ok(Value::String("[file handle]".to_string())),
                     };
                 } else {
-                    return Err(format!("未定义的变量: {}", var_name));
+                    return Err(format!("Undefined variable: {}", var_name));
                 }
             }
             
-            // 普通字符串字面量，支持转义字符
+            // Normal string literal, supporting escape characters
             let trimmed = content_part.trim_matches('"');
             let mut result = String::new();
             let mut chars = trimmed.chars().peekable();
@@ -1144,7 +1144,7 @@ impl Env {
                             '"' => result.push('"'),
                             '\\' => result.push('\\'),
                             _ => {
-                                // 特殊处理\+只显示为+
+                                // Special handling for \\+ to display as +
                                 if next_char == '+' {
                                     result.push('+');
                                 } else {
@@ -1154,7 +1154,7 @@ impl Env {
                             }
                         }
                     } else {
-                        // 单个反斜杠在末尾，直接添加
+                        // Single backslash at the end, add directly
                         result.push('\\');
                     }
                 } else {
@@ -1165,7 +1165,7 @@ impl Env {
             return Ok(Value::String(result));
         }
         
-        // 处理整数
+        // Process integer
         if value_str.starts_with("int:") {
             let num_str = value_str.trim_start_matches("int:");
             if let Ok(num) = num_str.parse::<i64>() {
@@ -1173,7 +1173,7 @@ impl Env {
             }
         }
         
-        // 处理浮点数
+        // Process float
         if value_str.starts_with("float:") {
             let num_str = value_str.trim_start_matches("float:");
             if let Ok(num) = num_str.parse::<f64>() {
@@ -1181,7 +1181,7 @@ impl Env {
             }
         }
         
-        // 默认作为字符串处理
+        // Default to string processing
         Ok(Value::String(value_str.to_string()))
     }
 }
@@ -1189,7 +1189,7 @@ impl Env {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     
-    // 检查版本号参数
+    // Check version parameter
     for arg in &args[1..] {
         if arg == "--version" || arg == "--ver" {
             println!("LeonBasic Interpreter v{}", version::VERSION);
@@ -1197,31 +1197,31 @@ fn main() {
         }
     }
     
-    // 检查是否启动shell模式
+    // Check if shell mode is enabled
     if args.len() == 2 && args[1] == "--shell" {
         start_shell();
         return;
     }
     
-    // 正常的文件执行模式
+    // Normal file execution mode
     let mut debug_mode = false;
     let mut file_path = None;
     
-    // 解析参数
+    // Parse arguments
     for (i, arg) in args.iter().enumerate() {
         if i == 0 {
-            // 跳过程序名称
+            // Skip program name
             continue;
         }
         if arg == "--debug" {
             debug_mode = true;
         } else if file_path.is_none() {
-            // 第一个非--debug参数是文件路径
+            // First non --debug argument is the file path
             file_path = Some(arg);
         }
     }
     
-    // 检查是否提供了文件路径
+    // Check if file path is provided
     let file_path = match file_path {
         Some(path) => path,
         None => {
@@ -1240,7 +1240,7 @@ fn main() {
     
     let mut env = Env::new(debug_mode);
     
-    // 注册内置函数
+    // Register built-in functions
     builtins::register_basic_functions(&mut env);
     builtins::register_request_functions(&mut env);
     builtins::register_time_functions(&mut env);
@@ -1258,21 +1258,21 @@ fn main() {
     }
 }
 
-// 启动交互式shell
+// Start interactive shell
 fn start_shell() {
     println!("LeonBasic Shell v0.1.0");
-    println!("输入 'exit' 退出shell");
-    println!("输入 'help' 查看帮助信息");
+    println!("Type 'exit' to quit the shell");
+    println!("Type 'help' to view help information");
     println!("---------------------");
     
-    let mut env = Env::new(false); // shell模式默认不开启调试
+    let mut env = Env::new(false); // Debug mode disabled by default in shell mode
     
-    // 默认加载basic库和time库
+    // Load basic and time libraries by default
     if let Err(e) = env.handle_require("require(\"basic\")") {
-        println!("警告: 无法加载basic库: {}", e);
+        println!("Warning: Failed to load basic library: {}", e);
     }
     if let Err(e) = env.handle_require("require(\"time\")") {
-        println!("警告: 无法加载time库: {}", e);
+        println!("Warning: Failed to load time library: {}", e);
     }
     
     loop {
@@ -1281,25 +1281,25 @@ fn start_shell() {
         
         let mut input = String::new();
         if let Err(e) = stdin().read_line(&mut input) {
-            println!("读取输入失败: {}", e);
+            println!("Failed to read input: {}", e);
             continue;
         }
         
         let line = input.trim();
         
-        // 处理特殊命令
+        // Handle special commands
         if line == "exit" || line == "quit" || line == "q" {
-            println!("再见!");
+            println!("Goodbye!");
             break;
         } else if line == "help" || line == "h" {
-            println!("可用命令:");
-            println!("  exit/quit/q  - 退出shell");
-            println!("  help/h       - 显示此帮助信息");
-            println!("  clear        - 清屏");
-            println!("基本语法示例:");
-            println!("  var(a) = string:\"Hello\";  # 定义变量");
-            println!("  basic.print(var(a));        # 打印变量");
-            println!("  require(\"basic\");          # 加载库");
+            println!("Available commands:");
+            println!("  exit/quit/q  - Exit the shell");
+            println!("  help/h       - Show this help message");
+            println!("  clear        - Clear the screen");
+            println!("Basic syntax examples:");
+            println!("  var(a) = string:\"Hello\";  # Define variable");
+            println!("  basic.print(var(a));        # Print variable");
+            println!("  require(\"basic\");          # Load library");
             continue;
         } else if line == "clear" {
             #[cfg(target_os = "windows")]
@@ -1309,16 +1309,16 @@ fn start_shell() {
             continue;
         }
         
-        // 执行LeonBasic代码
+        // Execute LeonBasic code
         if !line.is_empty() && !line.starts_with("//") {
             if let Err(e) = env.execute_line(line) {
-                println!("错误: {}", e);
+                println!("Error: {}", e);
             }
         }
     }
 }
 
-// 格式化值为字符串
-// 注意：format_value函数现在在builtins模块中定义
+// Format value as string
+// Note: format_value function is now defined in the builtins module
 
-// 注意：register_basic_functions函数现在在builtins模块中定义
+// Note: register_basic_functions function is now defined in the builtins module

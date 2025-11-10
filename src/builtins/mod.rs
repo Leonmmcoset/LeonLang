@@ -1,14 +1,14 @@
 use super::{Env, Value};
 
-// 导入各个内置库模块
+// Import various built-in library modules
 mod basic;
 mod request;
 mod time;
 
-// 重新导出各个模块的注册函数
+// Re-export registration functions from various modules
 pub use basic::register_basic_functions;
 pub use request::register_request_functions;
 pub use time::register_time_functions;
 
-// 导出类型别名供内部使用
+// Export type aliases for internal use
 type Function = Box<dyn Fn(Vec<Value>) -> Result<Value, String>>;
