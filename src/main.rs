@@ -1428,7 +1428,7 @@ fn main() {
 
 // Start interactive shell
 fn start_shell() {
-    println!("{}LeonBasic Shell v0.1.0{}", CYAN, RESET);
+    println!("{}LeonBasic Shell v0.1.1{}", CYAN, RESET);
     println!("Type {}'exit'{} to quit the shell", GREEN, RESET);
     println!("Type {}'help'{} to view help information", GREEN, RESET);
     println!("---------------------");
